@@ -2,7 +2,7 @@
     <name>Haskell plugin</name>
     <description>Support for Haskell language</description>
     <version>1.0</version>
-    <vendor>-</vendor>
+    <vendor logo="/haskell/haskell_16x16.png" url="http://code.google.com/p/ideah/">IDEAH</vendor>
     <idea-version since-build="8000"/>
 
     <application-components>

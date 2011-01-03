@@ -21,7 +21,7 @@ public final class HaskellModuleType extends ModuleType<HaskellModuleBuilder> {
     }
 
     public String getName() {
-        return "Haskell project";
+        return "Haskell Project";
     }
 
     public String getDescription() {
@@ -29,7 +29,7 @@ public final class HaskellModuleType extends ModuleType<HaskellModuleBuilder> {
     }
 
     public Icon getBigIcon() {
-        return IconLoader.getIcon("/haskell/haskell_32x32.png");
+        return IconLoader.getIcon("/haskell/haskell_24x24.png");
     }
 
     public Icon getNodeIcon(boolean isOpened) {

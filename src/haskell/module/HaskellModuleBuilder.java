@@ -41,7 +41,7 @@ public final class HaskellModuleBuilder extends JavaModuleBuilder {
             Project project = rootModel.getProject();
             // todo: do not reset if overriden by user?
             ProjectRootManager.getInstance(project).setProjectSdk(ghc);
-            setModuleJdk(ghc);
+            setModuleJdk(ghc); // todo: inherit SDK from project?
         }
         // todo: do not use tabs in project
         super.setupRootModel(rootModel);

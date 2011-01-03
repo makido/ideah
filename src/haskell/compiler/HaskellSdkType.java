@@ -20,7 +20,7 @@ public final class HaskellSdkType extends SdkType {
 
     public static final HaskellSdkType INSTANCE = new HaskellSdkType();
     private static final Pattern VER_PATTERN = Pattern.compile("^(.*) version ([1234567890_.]*)(.*)$");
-    public static final Icon GHC_ICON = IconLoader.getIcon("/haskell/haskell_16x16.png");
+    private static final Icon GHC_ICON = IconLoader.getIcon("/haskell/haskell_16x16.png"); // todo: another icon?
 
     public HaskellSdkType() {
         super("GHC");
@@ -31,6 +31,11 @@ public final class HaskellSdkType extends SdkType {
             return "/usr/lib/ghc/"; // todo: ???
         }
         if (SystemInfo.isWindows) {
+            // todo: try more options:
+            // todo: different disks
+            // todo: what Haskell Platform suggests on first install?
+            // todo: look in PATH
+            // todo: look in registry
             File[] roots = File.listRoots();
             if (roots.length > 0) {
                 return new File(roots[0], "Haskell").getAbsolutePath();

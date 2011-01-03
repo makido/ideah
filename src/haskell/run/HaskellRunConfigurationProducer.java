@@ -26,6 +26,7 @@ public final class HaskellRunConfigurationProducer extends RuntimeConfigurationP
         if (file instanceof HaskellFile) {
             HaskellFile hsFile = (HaskellFile) file;
             if (hsFile.isMainModule()) {
+                // todo: check if has main function
                 runFile = hsFile;
                 Project project = file.getProject();
                 RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
