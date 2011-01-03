@@ -1,0 +1,47 @@
+<idea-plugin version="2">
+    <name>Haskell plugin</name>
+    <description>Support for Haskell language</description>
+    <version>1.0</version>
+    <vendor>-</vendor>
+    <idea-version since-build="8000"/>
+
+    <application-components>
+        <component>
+            <implementation-class>haskell.HaskellLoader</implementation-class>
+        </component>
+    </application-components>
+
+    <project-components>
+        <component>
+            <implementation-class>haskell.compiler.HaskellCompilerProjectComponent</implementation-class>
+        </component>
+        <!-- Add your project components here -->
+    </project-components>
+
+    <actions>
+        <action id="Haskell.HaskellFile" class="haskell.actions.NewHaskellFileAction"
+                text="Haskell module" description="Create new Haskell module">
+            <add-to-group group-id="NewGroup" anchor="first"/>
+        </action>
+        <!-- Add your actions here -->
+    </actions>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <fileTypeFactory implementation="haskell.HaskellFileTypeLoader"/>
+
+        <syntaxHighlighter key="Haskell" implementationClass="haskell.highlighter.HaskellSyntaxHighlighter"/>
+        <colorSettingsPage implementation="haskell.highlighter.HaskellColorsAndFontsPage"/>
+        <lang.braceMatcher language="Haskell"
+                           implementationClass="haskell.highlighter.HaskellBraceMatcher"/>
+        <lang.commenter language="Haskell" implementationClass="haskell.highlighter.HaskellCommenter"/>
+        <lang.parserDefinition language="Haskell" implementationClass="haskell.parser.HaskellParserDefinition"/>
+
+        <sdkType id="GHC" implementation="haskell.compiler.HaskellSdkType"/>
+        <moduleType id="HASKELL_MODULE" classpathProvider="false" implementationClass="haskell.module.HaskellModuleType"/>
+        <moduleConfigurationEditorProvider implementation="haskell.module.HaskellModuleConfigEditor"/>
+
+        <configurationType implementation="haskell.run.HaskellRunConfigurationType"/>
+        <configurationProducer implementation="haskell.run.HaskellRunConfigurationProducer"/>
+        <!-- Add your extensions here -->
+    </extensions>
+</idea-plugin>
