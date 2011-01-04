@@ -9,7 +9,7 @@ public final class HaskellTokenType extends IElementType {
 
     private final String debugName;
 
-    HaskellTokenType(@NotNull @NonNls String debugName) {
+    public HaskellTokenType(@NotNull @NonNls String debugName) {
         super(debugName, HaskellFileType.HASKELL_LANGUAGE);
         this.debugName = debugName;
     }
