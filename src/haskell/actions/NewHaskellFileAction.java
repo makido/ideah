@@ -6,10 +6,12 @@ import com.intellij.ide.actions.CreateElementActionBase;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -49,7 +51,11 @@ public final class NewHaskellFileAction extends CreateElementActionBase {
         Project project = directory.getProject();
         // todo: if module name is not valid, create empty file
         PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(newName + "." + ext, type, "module " + newName + " where\n\n");
-        // todo: smth not working!
+        file = (PsiFile) directory.add(file);
+        VirtualFile virtualFile = file.getVirtualFile();
+        if (virtualFile != null) {
+            FileEditorManager.getInstance(directory.getProject()).openFile(virtualFile, true);
+        }
         return new PsiElement[] {file};
     }
 

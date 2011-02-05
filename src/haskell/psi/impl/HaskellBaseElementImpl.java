@@ -1,19 +1,37 @@
 package haskell.psi.impl;
 
-import com.intellij.extapi.psi.StubBasedPsiElementBase;
+import com.intellij.extapi.psi.ASTDelegatePsiElement;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import haskell.psi.HaskellPsiElement;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class HaskellBaseElementImpl<E extends HaskellPsiElement, T extends StubElement<E>> extends StubBasedPsiElementBase<T> implements HaskellPsiElement {
+public abstract class HaskellBaseElementImpl extends ASTDelegatePsiElement implements HaskellPsiElement {
+
+    @NotNull
+    private final ASTNode node;
 
     protected HaskellBaseElementImpl(@NotNull ASTNode node) {
-        super(node);
+        this.node = node;
     }
 
-    protected HaskellBaseElementImpl(@NotNull T stub, @NotNull IStubElementType<T, E> nodeType) {
-        super(stub, nodeType);
+    public final PsiElement getParent() {
+        return SharedImplUtil.getParent(getNode());
+    }
+
+    @NotNull
+    @Override
+    public final ASTNode getNode() {
+        return node;
+    }
+
+    protected final String getSrcSpan() {
+        return node.getTextRange().toString();
+    }
+
+    @Override
+    public String toString() {
+        return getSrcSpan();
     }
 }

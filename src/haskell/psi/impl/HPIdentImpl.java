@@ -4,13 +4,12 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.stubs.NamedStub;
 import com.intellij.util.IncorrectOperationException;
 import haskell.psi.api.HPIdent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public final class HPIdentImpl extends HaskellBaseElementImpl<HPIdent, NamedStub<HPIdent>> implements HPIdent, PsiReference {
+public final class HPIdentImpl extends HaskellBaseElementImpl implements HPIdent, PsiReference {
 
     public HPIdentImpl(@NotNull ASTNode node) {
         super(node);
