@@ -1,0 +1,19 @@
+1. For each identifier:
+1,1. Know its type - quick info
+1.2. Know its usages (across all modules, if global) -> find usages, rename, go to declaration
+1.3. Know its doc comment - quick info
+
+Code completion?
+Go to symbol by name
+Comment/uncomment
+Code formatting
+Hoogle
+
+Refactoring:
+1. introduce variable
+2. rename
+3. Add/remove parameter
+4. case <-> multi-pattern function
+
+REPL: auto-reload, show errors as in editor, multi-line expressions (Ctrl+Enter to execute),
+separators between code and output, save history
