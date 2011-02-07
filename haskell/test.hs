@@ -1,6 +1,7 @@
 --data D = D Int Int
+data String = Int
 
-print :: (Show b) => b -> String
+print :: (Show b) => b -> Prelude.String
 print x = show x
 
 l [] = 0
@@ -9,5 +10,5 @@ l (x:xs) = 1 + l xs
 --test (D x y) = x + y
 
 main = Prelude.print $ test "x"
-  where test :: String -> Int
+  where test :: Prelude.String -> Int
         test str = l str

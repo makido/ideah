@@ -1,4 +1,3 @@
--- todo: type pretty-print (including typeclass context)
 import Outputable
 import GHC
 import Var
@@ -7,54 +6,46 @@ import TypeRep
 import HUtil
 import Walker
 
-walkVar :: Var -> String
-walkVar var | isTyVar var = "Var.TyVar"
-            | isTcTyVar var = "Var.TcTyVar"
---            | isId var = toString $ varType var
-            | isId var = walkType (varType var)
-            | otherwise = toString var
+unForall :: Type -> Type
+unForall (ForAllTy _ t) = unForall t
+unForall t = t
 
-walkType :: Type -> String
---walkType (TyVarTy tyVar) = return ("TyVarTy " ++ toString (tyVarName tyVar) ++ ": " ++ show (tcTyVarDetails tyVar))
-walkType (TyVarTy tyVar) = "TyVarTy " ++ toString tyVar
-walkType (AppTy t1 t2) = let
-    ts1 = walkType t1
-    ts2 = walkType t2
-  in "AppTy (" ++ ts1 ++ ", " ++ ts2 ++ ")"
-walkType (TyConApp con types) = let
-    ts = map walkType types
-  in toString con ++ " " ++ show ts
-walkType (FunTy t1 t2) = let
-    ts1 = walkType t1
-    ts2 = walkType t2
-  in "(" ++ ts1 ++ " -> " ++ ts2 ++ ")"
-walkType (ForAllTy var t) = "ForAllTy <" ++ toString var ++ "/" ++ walkType t ++ ">"
-walkType (PredTy pt) = "PredTy {" ++ toString pt ++ "}"
+modName :: Name -> Maybe String
+modName var = do
+    md <- nameModule_maybe var
+    return (toString $ moduleName md)
 
-test :: Id -> SrcSpan -> Where -> Ghc ()
---test var loc _ = trace ("----- " ++ varStr var) $ return ()
---    where varStr var = toString loc ++ " " ++ toString (Var.varName var) ++ ": " ++ toString (varType var) ++ " @ " ++ toString (varUnique var)
-test var loc w = do
-  let ts = walkType (varType var)
-  trace (show w ++ ": " ++ (toString $ Var.varName var) ++ ": " ++ ts) $ return ()
+-- todo: add module name?
+extractId :: Name -> SrcSpan -> Where -> Ghc ()
+extractId var loc w = do
+    trace (show w ++ ": " ++ toString loc ++ " " ++ (show $ modName var) ++ " \"" ++ (toString $ nameOccName var) ++ "\" @ " ++ (toString $ nameUnique var)) $ return ()
 
-test1 :: Name -> SrcSpan -> Where -> Ghc ()
-test1 var loc w = trace ("----- " ++ varStr var) $ return ()
-    where varStr var = toString loc ++ " " ++ toString (nameModule_maybe var) ++ " " ++ toString (nameOccName var) ++ ": " ++ toString (nameUnique var)
+extractTypes :: PprStyle -> Id -> SrcSpan -> Where -> Ghc ()
+extractTypes style var loc WFunDecl2 = do
+    let ts = show $ pprType (unForall $ varType var) style
+    trace ((toString $ Var.varName var) ++ ": " ++ ts) $ return ()
+extractTypes _ _ _ _ = return ()
+
+doExtractTypes checked = do
+    let info = tm_checked_module_info checked
+    (Just unqual) <- mkPrintUnqualifiedForModule info
+    let style = mkUserStyle unqual AllTheWay
+    walkLBinds CB { generic = extractTypes style, name = (\_ _ _ -> return ())} (typecheckedSource checked)
+
+doExtractIds checked = do
+    let (Just (grp, _, _, _)) = renamedSource checked
+    walkGroup CB { generic = extractId, name = extractId } grp
 
 doWalk :: Ghc ()
 doWalk = do
     flags <- getSessionDynFlags
-    setSessionDynFlags flags
+    setSessionDynFlags (flags { hscTarget = HscNothing, ghcLink = NoLink })
     addTarget Target { targetId = TargetFile "test.hs" Nothing, targetAllowObjCode = False, targetContents = Nothing }
     g <- depanal [] True
     parsed <- parseModule $ head g
     checked <- typecheckModule parsed
-    --let (Just (grp, _, _, _)) = renamedSource checked
-    --let vals = hs_valds grp
-    --walkBinds test1 vals
-    --trace (toString $ typecheckedSource checked) $ return ()
-    walkLBinds CB {generic=test, name=test1} (typecheckedSource checked)
+    --doExtractTypes checked
+    doExtractIds checked
 
 main = do
     runGhc (Just "C:\\Haskell\\lib") doWalk

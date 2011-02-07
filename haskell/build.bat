@@ -1,1 +1,1 @@
-ghc --make -package ghc walk_test.hs
+ghc -W --make -package ghc walk_test.hs

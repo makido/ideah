@@ -1,9 +1,8 @@
 module Walker (
     Where(..), Callback(..),
-    walk, walkBinds, walkLBinds
+    walk, walkLBinds, walkGroup
     ) where
 
-import Outputable
 import Bag
 import GHC
 import BasicTypes
@@ -16,12 +15,12 @@ data Callback a m = CB {generic :: a -> SrcSpan -> Where -> m (),
                         name :: Name -> SrcSpan -> Where -> m ()}
 
 
-walkId :: (Monad m, OutputableBndr a) => Callback a m -> Located a -> Where -> m ()
+walkId :: (Monad m) => Callback a m -> Located a -> Where -> m ()
 walkId f name definition = (generic f) (unLoc name) (getLoc name) definition
 
 
 -- Type/class declarations
-walkTyClD :: (Monad m, OutputableBndr a) => Callback a m -> TyClDecl a -> m ()
+walkTyClD :: (Monad m) => Callback a m -> TyClDecl a -> m ()
 -- foreign type
 walkTyClD f (ForeignType name _) = walkId f name WTyDecl
 -- type family declaration
@@ -39,21 +38,21 @@ walkTyClD f (ClassDecl _ name _ _ _ _ _ _) = walkId f name WTyDecl
 
 
 -- Instance declarations
-walkInstD :: (Monad m, OutputableBndr a) => Callback a m -> InstDecl a -> m ()
+walkInstD :: (Monad m) => Callback a m -> InstDecl a -> m ()
 walkInstD _f (InstDecl _ _ _ _) = return ()
 
 
 -- Deriving declarations
-walkDerivD :: (Monad m, OutputableBndr a) => Callback a m -> DerivDecl a -> m ()
+walkDerivD :: (Monad m) => Callback a m -> DerivDecl a -> m ()
 walkDerivD _f (DerivDecl _) = return ()
 
 
-walkBinds :: (Monad m, OutputableBndr a) => Callback a m -> HsValBindsLR a a -> m ()
+walkBinds :: (Monad m) => Callback a m -> HsValBindsLR a a -> m ()
 walkBinds f (ValBindsIn binds _) = walkLBinds f binds
 walkBinds f (ValBindsOut binds _) = mapM_ (walkLBinds f) bags
     where bags = map snd binds -- list of bags
 
-walkLocals :: (Monad m, OutputableBndr a) => Callback a m -> HsLocalBinds a -> m ()
+walkLocals :: (Monad m) => Callback a m -> HsLocalBinds a -> m ()
 walkLocals f (HsValBinds binds) = walkBinds f binds
 walkLocals f (HsIPBinds (IPBinds binds _)) = mapM_ walkIP binds
     where walkIP lip = do
@@ -63,10 +62,10 @@ walkLocals f (HsIPBinds (IPBinds binds _)) = mapM_ walkIP binds
 walkLocals _f EmptyLocalBinds = return ()
 
 
-walkLStmt :: (Monad m, OutputableBndr a) => Callback a m -> LStmt a -> m ()
+walkLStmt :: (Monad m) => Callback a m -> LStmt a -> m ()
 walkLStmt f = walkStmt f . unLoc
 
-walkStmt :: (Monad m, OutputableBndr a) => Callback a m -> Stmt a -> m ()
+walkStmt :: (Monad m) => Callback a m -> Stmt a -> m ()
 -- pat <- expr statement in do
 walkStmt f (BindStmt pat expr _ _) = do
     walkLPattern f pat
@@ -82,7 +81,7 @@ walkStmt f (GroupStmt _ _) = return ()
 walkStmt f (RecStmt _ _ _ _ _ _ _ _) = return ()
 
 
-walkRHSs :: (Monad m, OutputableBndr a) => Callback a m -> GRHSs a -> m ()
+walkRHSs :: (Monad m) => Callback a m -> GRHSs a -> m ()
 walkRHSs f (GRHSs grhs locals) = do
         mapM_ walkRHS (map unLoc grhs)
         walkLocals f locals
@@ -91,20 +90,20 @@ walkRHSs f (GRHSs grhs locals) = do
               walkLExpr f expr
 
 
-walkMatchGroup :: (Monad m, OutputableBndr a) => Callback a m -> MatchGroup a -> m ()
+walkMatchGroup :: (Monad m) => Callback a m -> MatchGroup a -> m ()
 walkMatchGroup f (MatchGroup matches _) = mapM_ walkMatch (map unLoc matches)
     where walkMatch (Match pats _ rhss) = do
               mapM_ (walkLPattern f) pats
               walkRHSs f rhss
 
 
-walkConPat :: (Monad m, OutputableBndr a) => Callback a m -> HsConPatDetails a -> m ()
+walkConPat :: (Monad m) => Callback a m -> HsConPatDetails a -> m ()
 walkConPat f details = mapM_ (walkLPattern f) (hsConPatArgs details)
 
-walkLPattern :: (Monad m, OutputableBndr a) => Callback a m -> LPat a -> m ()
+walkLPattern :: (Monad m) => Callback a m -> LPat a -> m ()
 walkLPattern f lpat = walkPattern f (getLoc lpat) (unLoc lpat)
 
-walkPattern :: (Monad m, OutputableBndr a) => Callback a m -> SrcSpan -> Pat a -> m ()
+walkPattern :: (Monad m) => Callback a m -> SrcSpan -> Pat a -> m ()
 -- wildcard pattern (_)
 walkPattern _f _loc (WildPat _) = return () -- todo: has type
 -- variable pattern (matches any value)
@@ -152,10 +151,10 @@ walkPattern _f _loc (SigPatOut _ _) = return ()
 walkPattern _f _loc (CoPat _ _ _) = return ()
 
 
-walkLExpr :: (Monad m, OutputableBndr a) => Callback a m -> LHsExpr a -> m ()
+walkLExpr :: (Monad m) => Callback a m -> LHsExpr a -> m ()
 walkLExpr f lexpr = walkExpr f (getLoc lexpr) (unLoc lexpr)
 
-walkExpr :: (Monad m, OutputableBndr a) => Callback a m -> SrcSpan -> HsExpr a -> m ()
+walkExpr :: (Monad m) => Callback a m -> SrcSpan -> HsExpr a -> m ()
 -- named reference
 walkExpr f loc (HsVar var) = (generic f) var loc WVal
 -- implicit parameter
@@ -254,7 +253,7 @@ walkExpr _f _loc (HsType _) = return ()
 -- ???
 walkExpr _f _loc (HsWrap wrapper expr) = return ()
 
-walkSeq:: (Monad m, OutputableBndr a) => Callback a m -> ArithSeqInfo a -> m ()
+walkSeq:: (Monad m) => Callback a m -> ArithSeqInfo a -> m ()
 walkSeq f (From from) = walkLExpr f from
 walkSeq f (FromThen from thn) = do
     walkLExpr f from
@@ -267,22 +266,22 @@ walkSeq f (FromThenTo from thn to) = do
     walkLExpr f thn
     walkLExpr f to
 
-walkRecord :: (Monad m, OutputableBndr a) => Callback a m -> HsRecordBinds a -> m ()
+walkRecord :: (Monad m) => Callback a m -> HsRecordBinds a -> m ()
 walkRecord f binds = mapM_ walkField (rec_flds binds)
     where walkField (HsRecField fld arg _) = do
               walkId f fld WVal
               walkLExpr f arg
 
-walkLBinds :: (Monad m, OutputableBndr a) => Callback a m -> LHsBinds a -> m ()
+walkLBinds :: (Monad m) => Callback a m -> LHsBinds a -> m ()
 walkLBinds f lbinds = do
     mapBagM (walkLBind f) lbinds
     return ()
 
-walkLBind :: (Monad m, OutputableBndr a) => Callback a m -> LHsBindLR a a -> m ()
+walkLBind :: (Monad m) => Callback a m -> LHsBindLR a a -> m ()
 walkLBind f lbind = walkValD f (getLoc lbind) (unLoc lbind)
 
 -- Normal declarations
-walkValD :: (Monad m, OutputableBndr a) => Callback a m -> SrcSpan -> HsBind a -> m ()
+walkValD :: (Monad m) => Callback a m -> SrcSpan -> HsBind a -> m ()
 -- function declaration (including value declaration)
 walkValD f _loc (FunBind funId _ mg _ _ _) = do
     walkId f funId WFunDecl
@@ -292,9 +291,9 @@ walkValD f _loc (PatBind lhs rhss _ _) = do -- todo: has type
     walkLPattern f lhs
     walkRHSs f rhss
 -- ???
-walkValD f loc (VarBind var expr) = return ()
+walkValD _f _loc (VarBind _ _) = return ()
 {-
-  do
+walkValD f loc (VarBind var expr) = do
     (generic f) var loc WFunDecl
     walkLExpr f expr
 -}
@@ -305,34 +304,64 @@ walkValD f loc (AbsBinds _ _ exps binds) = do
     where ids = [x | (_, x, _, _) <- exps]
 
 
+-- Fixity declarations
+walkFixD :: (Monad m) => Callback a m -> FixitySig a -> m ()
+walkFixD _f _ = return ()
+
+
 -- Signature declarations
-walkSigD :: (Monad m, OutputableBndr a) => Callback a m -> Sig a -> m ()
+walkSigD :: (Monad m) => Callback a m -> Sig a -> m ()
 -- type signature
 walkSigD _f (TypeSig _ _) = return ()
 -- fixity
-walkSigD _f (FixSig _) = return ()
--- ???
+walkSigD f (FixSig fixSig) = walkFixD f fixSig
+-- inline pragmas
 walkSigD _f (InlineSig _ _) = return ()
--- ???
+-- specialisation pragma
 walkSigD _f (SpecSig _ _ _) = return ()
--- ???
+-- specialisation pragma for instance declaration
 walkSigD _f (SpecInstSig _) = return ()
 -- ???
 walkSigD _f (IdSig _) = return ()
 
 
--- ???
-walkDefD :: (Monad m, OutputableBndr a) => Callback a m -> DefaultDecl a -> m ()
+-- Default instance declarations
+walkDefD :: (Monad m) => Callback a m -> DefaultDecl a -> m ()
 walkDefD _f (DefaultDecl _) = return ()
 
 
 -- Foreign declarations
-walkForD :: (Monad m, OutputableBndr a) => Callback a m -> ForeignDecl a -> m ()
+walkForD :: (Monad m) => Callback a m -> ForeignDecl a -> m ()
 walkForD _f (ForeignImport _ _ _) = return ()
 walkForD _f (ForeignExport _ _ _) = return ()
 
 
-walk :: (Monad m, OutputableBndr a) => Callback a m -> SrcSpan -> HsDecl a -> m ()
+-- Warnings
+walkWarnD :: (Monad m) => Callback a m -> WarnDecl a -> m ()
+walkWarnD _f _ = return ()
+
+
+-- Rules
+walkRuleD :: (Monad m) => Callback a m -> RuleDecl a -> m ()
+walkRuleD _f _ = return ()
+
+
+-- Splices
+walkSpliceD :: (Monad m) => Callback a m -> SpliceDecl a -> m ()
+walkSpliceD _f _ = return ()
+
+
+-- Annotations
+walkAnnD :: (Monad m) => Callback a m -> AnnDecl a -> m ()
+walkAnnD _f _ = return ()
+
+
+-- Docs
+walkDocD :: (Monad m) => Callback a m -> DocDecl -> m ()
+walkDocD _f _ = return ()
+
+
+walk :: (Monad m) => Callback a m -> SrcSpan -> HsDecl a -> m ()
 walk f _loc (TyClD tyClD) = walkTyClD f tyClD
 walk f _loc (InstD instD) = walkInstD f instD
 walk f _loc (DerivD derivD) = walkDerivD f derivD
@@ -340,8 +369,23 @@ walk f loc (ValD valD) = walkValD f loc valD
 walk f _loc (SigD sigD) = walkSigD f sigD
 walk f _loc (DefD defD) = walkDefD f defD
 walk f _loc (ForD forD) = walkForD f forD
-walk f _loc (WarningD warnD) = return ()
-walk f _loc (RuleD ruleD) = return ()
-walk f _loc (SpliceD spliceD) = return ()
-walk f _loc (DocD docD) = return ()
-walk f _loc (AnnD annD) = return ()
+walk f _loc (WarningD warnD) = walkWarnD f warnD
+walk f _loc (RuleD ruleD) = walkRuleD f ruleD
+walk f _loc (SpliceD spliceD) = walkSpliceD f spliceD
+walk f _loc (AnnD annD) = walkAnnD f annD
+walk f _loc (DocD docD) = walkDocD f docD
+
+
+walkGroup :: (Monad m) => Callback a m -> HsGroup a -> m ()
+walkGroup f (HsGroup valds tyclds instds derivds fixds defds fords warnds annds ruleds docs) = do
+    walkBinds f valds
+    mapM_ (walkTyClD f . unLoc) tyclds
+    mapM_ (walkInstD f . unLoc) instds
+    mapM_ (walkDerivD f . unLoc) derivds
+    mapM_ (walkFixD f . unLoc) fixds
+    mapM_ (walkDefD f . unLoc) defds
+    mapM_ (walkForD f . unLoc) fords
+    mapM_ (walkWarnD f . unLoc) warnds
+    mapM_ (walkAnnD f . unLoc) annds
+    mapM_ (walkRuleD f . unLoc) ruleds
+    mapM_ (walkDocD f . unLoc) docs
