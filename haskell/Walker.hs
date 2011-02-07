@@ -9,7 +9,7 @@ import BasicTypes
 import DataCon
 
 data Where = WTyDecl | WConDecl | WFunDecl | WFunDecl2 | WParam | WVal | WCon
-    deriving Show
+    deriving (Show, Eq)
 
 data Callback a m = CB {generic :: a -> SrcSpan -> Where -> m (),
                         name :: Name -> SrcSpan -> Where -> m ()}

@@ -15,10 +15,12 @@ modName var = do
     md <- nameModule_maybe var
     return (toString $ moduleName md)
 
--- todo: add module name?
+isDefinition :: Where -> Bool
+isDefinition x = x == WTyDecl || x == WConDecl || x == WFunDecl || x == WFunDecl2 || x == WParam
+
 extractId :: Name -> SrcSpan -> Where -> Ghc ()
 extractId var loc w = do
-    trace (show w ++ ": " ++ toString loc ++ " " ++ (show $ modName var) ++ " \"" ++ (toString $ nameOccName var) ++ "\" @ " ++ (toString $ nameUnique var)) $ return ()
+    trace ((if isDefinition w then "!" else " ") ++ " " ++ toString loc ++ "\t\t" ++ (show $ modName var) ++ " \"" ++ (toString $ nameOccName var) ++ "\" @ " ++ (toString $ nameUnique var)) $ return ()
 
 extractTypes :: PprStyle -> Id -> SrcSpan -> Where -> Ghc ()
 extractTypes style var loc WFunDecl2 = do
@@ -30,7 +32,7 @@ doExtractTypes checked = do
     let info = tm_checked_module_info checked
     (Just unqual) <- mkPrintUnqualifiedForModule info
     let style = mkUserStyle unqual AllTheWay
-    walkLBinds CB { generic = extractTypes style, name = (\_ _ _ -> return ())} (typecheckedSource checked)
+    walkLBinds CB { generic = extractTypes style, name = (\_ _ _ -> return ()) } (typecheckedSource checked)
 
 doExtractIds checked = do
     let (Just (grp, _, _, _)) = renamedSource checked
