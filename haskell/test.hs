@@ -1,3 +1,5 @@
+import Control.Monad
+
 --data D = D Int Int
 data String = Int
 

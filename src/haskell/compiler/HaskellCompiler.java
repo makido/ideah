@@ -4,6 +4,7 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.TranslatingCompiler;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -15,6 +16,7 @@ import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Chunk;
 import haskell.HaskellFileType;
@@ -72,9 +74,25 @@ public final class HaskellCompiler implements TranslatingCompiler {
         }
     }
 
-    private void compileFiles(CompileContext context, Module module, List<VirtualFile> toCompile, OutputSink sink, boolean tests) {
-        System.out.println(toCompile);
-        // todo: run compiler
+    protected static VirtualFile getMainOutput(CompileContext compileContext, Module module, boolean tests) {
+        return tests
+            ? compileContext.getModuleOutputDirectoryForTests(module)
+            : compileContext.getModuleOutputDirectory(module);
+    }
+
+    private void compileFiles(CompileContext context, Module module, List<VirtualFile> toCompile,
+                              OutputSink sink, boolean tests) {
+        VirtualFile outputDir = getMainOutput(context, module, tests);
+        List<OutputItem> output = new ArrayList<OutputItem>();
+        for (VirtualFile file : toCompile) {
+            System.out.println(file);
+            // todo: run compiler
+            context.addMessage(
+                CompilerMessageCategory.ERROR, "Error!!!",
+                file.getUrl(), 2, 2 // todo: can be another file!!!
+            );
+        }
+        sink.add(outputDir.getPath(), output, VfsUtil.toVirtualFileArray(toCompile));
     }
 
     private static boolean shouldCompile(VirtualFile file, CompilerConfiguration configuration) {
