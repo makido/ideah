@@ -1,10 +1,13 @@
 package haskell.compiler;
 
-import java.io.IOException;
+import com.intellij.openapi.diagnostic.Logger;
+
+import java.io.*;
 import java.util.List;
 
-// todo: make callable from IDEA
 public class LaunchGHC {
+
+    private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.clojure.compiler.ClojureBackendCompiler");
 
     public static void main(String[] args) {
         Runtime runtime = Runtime.getRuntime();
@@ -14,7 +17,7 @@ public class LaunchGHC {
             cmdArray[0] = "./err_test.hs";
             System.arraycopy(args, 0, cmdArray, 1, argsLength);
             Process process = runtime.exec(cmdArray);*/
-            //args = new String[] {"test.hs"};
+            args = new String[]{"test.hs"};
             Process process = runtime.exec("./err_test.exe " + args[0]);
             GHCMessageReader stdin = new GHCMessageReader(process.getInputStream());
             GHCMessageReader stderr = new GHCMessageReader(process.getErrorStream());
@@ -22,17 +25,16 @@ public class LaunchGHC {
             stderr.start();
             stdin.join();
             stderr.join();
-            // todo: only 1 stream
             markErrors(stdin.getGHCErrors());
             markErrors(stderr.getGHCErrors());
         } catch (IOException e) {
-            e.printStackTrace();
+            LOG.error(e);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            LOG.error(e);
         }
     }
 
-    public static void markErrors(List<GHCError> errorMarker) {
+    public static void markErrors(List<GHCMessage> messageMarker) {
         // todo
     }
 }

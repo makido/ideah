@@ -1,28 +1,33 @@
 package haskell.compiler;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import com.intellij.openapi.diagnostic.Logger;
 
-// todo: make unpublic final
-public class GHCMessageReader extends Thread {
 
-    private InputStream stream; // todo: make final
-    private List<GHCError> ghcErrors = new ArrayList<GHCError>(); // todo: make final
+final class GHCMessageReader extends Thread {
 
-    GHCMessageReader(InputStream stream) {
+    private final InputStream stream;
+    private final List<GHCMessage> ghcMessages = new ArrayList<GHCMessage>();
+
+    private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.clojure.compiler.ClojureBackendCompiler");
+
+    protected GHCMessageReader(InputStream stream) {
         this.stream = stream;
     }
 
-    // todo: remove synchronized
     public synchronized void run() {
-        BufferedReader ghcErrorReader = new BufferedReader(new InputStreamReader(stream)); // todo: read in UTF8?
+        BufferedReader ghcErrorReader = null;
+        try {
+            ghcErrorReader = new BufferedReader(new InputStreamReader(stream, "UTF8"));
+        } catch (UnsupportedEncodingException e) {
+            LOG.error(e);
+        }
         List<StringBuffer> buffers = new ArrayList<StringBuffer>();
         try {
-            final String newLine = System.getProperty("line.separator"); // todo: remove final
+
+            String newLine = System.getProperty("line.separator");
             StringBuffer tmpBuffer = new StringBuffer();
             String line = ghcErrorReader.readLine();
             while (line != null) {
@@ -35,15 +40,14 @@ public class GHCMessageReader extends Thread {
                 line = ghcErrorReader.readLine();
             }
             for (StringBuffer buffer : buffers) {
-                ghcErrors.add(new GHCError(buffer.toString()));
+                ghcMessages.add(new GHCMessage(buffer.toString()));
             }
         } catch (IOException e) {
-            e.printStackTrace(); // todo: use IDEA logger?
+            LOG.error(e);
         }
     }
 
-    // todo: remove public synchronized
-    public synchronized List<GHCError> getGHCErrors() {
-        return ghcErrors;
+    protected synchronized List<GHCMessage> getGHCErrors() {
+        return ghcMessages;
     }
 }
