@@ -26,7 +26,6 @@ final class GHCMessageReader extends Thread {
         }
         List<StringBuffer> buffers = new ArrayList<StringBuffer>();
         try {
-
             String newLine = System.getProperty("line.separator");
             StringBuffer tmpBuffer = new StringBuffer();
             String line = ghcErrorReader.readLine();
