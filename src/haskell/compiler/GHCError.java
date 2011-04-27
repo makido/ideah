@@ -1,8 +1,6 @@
 package haskell.compiler;
 
-// todo: make unpublic final
-// todo: make all methods unpublic
-public class GHCError {
+final class GHCError {
 
     // todo: make all final
     private int startLine, endLine;
@@ -10,7 +8,7 @@ public class GHCError {
     private String errorMessage;
     // todo: add warning flag
 
-    public GHCError(String ghcError) {
+    GHCError(String ghcError) {
         final String newLine = System.getProperty("line.separator"); // todo: remove final
         int newLineIndex = ghcError.indexOf(newLine);
         initPos(ghcError.substring(0, newLineIndex));
@@ -26,23 +24,23 @@ public class GHCError {
         endColumn = Integer.valueOf(lineColumnStrings[3]);
     }
 
-    public int getStartLine() {
+    int getStartLine() {
         return startLine;
     }
 
-    public int getEndLine() {
+    int getEndLine() {
         return endLine;
     }
 
-    public int getStartColumn() {
+    int getStartColumn() {
         return startColumn;
     }
 
-    public int getEndColumn() {
+    int getEndColumn() {
         return endColumn;
     }
 
-    public String getErrorMessage() {
+    String getErrorMessage() {
         return errorMessage;
     }
 }
