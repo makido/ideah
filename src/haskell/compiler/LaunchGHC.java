@@ -17,8 +17,8 @@ public class LaunchGHC {
             cmdArray[0] = "./err_test.hs";
             System.arraycopy(args, 0, cmdArray, 1, argsLength);
             Process process = runtime.exec(cmdArray);*/
-            args = new String[]{"test.hs"};
-            Process process = runtime.exec("./err_test.exe " + args[0]);
+            args = new String[]{"haskell/test.hs"};
+            Process process = runtime.exec("haskell/err_test.exe " + args[0]);
             GHCMessageReader stdin = new GHCMessageReader(process.getInputStream());
             GHCMessageReader stderr = new GHCMessageReader(process.getErrorStream());
             stdin.start();

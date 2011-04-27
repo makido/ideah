@@ -8,12 +8,12 @@ final class GHCMessage {
     private int endColumn;
     private final String errorMessage;
     private final boolean isWarning;
-    private final String moduleName;
+    private final String fileName;
 
     GHCMessage(String ghcError) {
         String newLine = System.getProperty("line.separator");
         int newLineIndex = ghcError.indexOf(newLine);
-        moduleName = ghcError.substring(0, newLineIndex).trim();
+        fileName = ghcError.substring(0, newLineIndex).trim();
         int nextNewLineIndex = ghcError.indexOf(newLine, newLineIndex + 1);
         initPos(ghcError.substring(newLineIndex, nextNewLineIndex).trim());
         errorMessage = ghcError.substring(nextNewLineIndex).trim();
@@ -52,7 +52,7 @@ final class GHCMessage {
         return isWarning;
     }
 
-    public String getModuleName() {
-        return moduleName;
+    public String getFileName() {
+        return fileName;
     }
 }

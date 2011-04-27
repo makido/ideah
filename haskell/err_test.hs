@@ -19,7 +19,7 @@ msgStr :: Message -> PrintUnqualified -> String
 msgStr msg unqual = show $ msg (mkErrStyle unqual)
 
 newMsgIndicator = "\f"
-badSrcSpan       = "\b"
+badSrcSpan      = "\b"
 
 output1 :: (MonadIO m) => ErrMsg -> m ()
 output1 msg = do
