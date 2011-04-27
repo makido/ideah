@@ -8,10 +8,10 @@ import com.intellij.openapi.diagnostic.Logger;
 
 final class GHCMessageReader extends Thread {
 
+    private static final Logger LOG = Logger.getInstance("haskell.compiler.GHCMessageReader");
+
     private final InputStream stream;
     private final List<GHCMessage> ghcMessages = new ArrayList<GHCMessage>();
-
-    private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.clojure.compiler.ClojureBackendCompiler");
 
     protected GHCMessageReader(InputStream stream) {
         this.stream = stream;

@@ -7,7 +7,7 @@ import java.util.List;
 
 public class LaunchGHC {
 
-    private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.clojure.compiler.ClojureBackendCompiler");
+    private static final Logger LOG = Logger.getInstance("haskell.compiler.LaunchGHC");
 
     public static void main(String[] args) {
         Runtime runtime = Runtime.getRuntime();
