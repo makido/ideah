@@ -11,6 +11,7 @@ import FastString
 import Control.Monad (when)
 import Data.Char (isUpper)
 import System.Console.GetOpt
+import System.FilePath.Posix (dropExtension)
 
 locStr :: SrcLoc -> String
 locStr loc = if isGoodSrcLoc loc then show (srcLocLine loc) ++ ":"
@@ -101,7 +102,7 @@ options =
 
 defaultOpts :: Options
 defaultOpts = Options
-  { ghcPath         = "./"
+  { ghcPath         = "C:/Program Files (x86)/Haskell Platform/2010.2.0.0/lib/"
   , outputPath      = "./"
   , compilerOptions = []
   , exeFile         = Nothing
@@ -113,25 +114,21 @@ main = do
     when (not (null errors)) $ ioError $ userError $ concat errors
     let opts                      = foldl (\opt f -> f opt) defaultOpts opts'
         outPath                   = outputPath opts
-        makeSrcs                  = map (++ ".hs")
-        makeObjects               = map (++ ".o")
-        (modules, nonModules)        = foldl (\(ups, lows)
-          file@(f:_) -> if isUpper f then (file:ups, lows) else (ups, file:lows))
+        (modules, nonModules)     = foldl (\(ups, lows) file@(f:_)
+          -> if isUpper f then (file:ups, lows) else (ups, file:lows))
           ([], []) files
         runGhcPath additionalOpts = runGhc (Just (ghcPath opts))
           . doWalk (compilerOptions opts ++ additionalOpts)
-    runGhcPath ["--make", "-c", "-outputdir " ++ outPath] $ makeSrcs modules
-    mapM (\file -> runGhcPath ["-c", "-i" ++ outPath
-      , "-o " ++ outPath ++ "/" ++ file ++ ".o"
-      , "-ohi " ++ outPath ++ "/" ++ file ++ ".hi"]
-      [file])
-      $ makeObjects nonModules
+    runGhcPath ["--make", "-c", "-outputdir " ++ outPath] modules
+    mapM (\file ->
+      let ohiOption opt ext =
+            opt ++ outPath ++ "/" ++ (dropExtension file) ++ ext
+      in runGhcPath [ "-c", "-i" ++ outPath, ohiOption "-o " ".o"
+                    , ohiOption "-ohi " ".hi"] [file]) nonModules
     case exeFile opts of
       Just toExe -> runGhcPath
-        ["-o " ++ outPath ++ "/" ++ toExe ++ ".exe", toExe ++ ".o"]
+        (("-o " ++ outPath ++ "/" ++ dropExtension toExe ++ ".exe")
+        : map ((++ ".o") . dropExtension) modules)
         [toExe]
       _          -> return ()
     return ()
-
--- runGhc (Just "C:/Program Files (x86)/Haskell Platform/2010.2.0.0/lib/")
--- (doWalk ["-W"] args)
