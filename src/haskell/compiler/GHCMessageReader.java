@@ -12,7 +12,6 @@ final class GHCMessageReader extends Thread {
 
     private final InputStream stream;
     private final List<GHCMessage> ghcMessages = new ArrayList<GHCMessage>();
-
     protected GHCMessageReader(InputStream stream) {
         this.stream = stream;
     }
@@ -46,7 +45,7 @@ final class GHCMessageReader extends Thread {
         }
     }
 
-    protected synchronized List<GHCMessage> getGHCErrors() {
+    protected synchronized List<GHCMessage> getGHCMessages() {
         return ghcMessages;
     }
 }

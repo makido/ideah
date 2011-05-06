@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Chunk;
@@ -23,6 +24,8 @@ import haskell.HaskellFileType;
 import haskell.module.HaskellModuleType;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.text.MessageFormat;
 import java.util.*;
 
@@ -71,6 +74,7 @@ public final class HaskellCompiler implements TranslatingCompiler {
             if (!toCompileTests.isEmpty()) {
                 compileFiles(context, module, toCompileTests, sink, true);
             }
+
         }
     }
 
@@ -85,12 +89,15 @@ public final class HaskellCompiler implements TranslatingCompiler {
         VirtualFile outputDir = getMainOutput(context, module, tests);
         List<OutputItem> output = new ArrayList<OutputItem>();
         for (VirtualFile file : toCompile) {
-            System.out.println(file);
-            // todo: run compiler
-            context.addMessage(
-                CompilerMessageCategory.ERROR, "Error!!!",
-                file.getUrl(), 2, 2 // todo: can be another file!!!
-            );
+            for (GHCMessage message : LaunchGHC.getGHCMessages(file.getPath())) {
+                System.out.println(new File(message.getFileName()).getPath());
+                context.addMessage(
+                        CompilerMessageCategory.ERROR, message.getErrorMessage(),
+//                        LocalFileSystem.getInstance().findFileByIoFile(new File(message.getFileName())).getUrl(),
+                        new File(message.getFileName()).getPath(),
+                        message.getStartLine(), message.getStartColumn()
+                );
+            }
         }
         sink.add(outputDir.getPath(), output, VfsUtil.toVirtualFileArray(toCompile));
     }

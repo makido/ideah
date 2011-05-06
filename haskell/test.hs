@@ -7,7 +7,7 @@ print :: (Show b) => b -> Prelude.String
 print x = show x
 
 l [] = 0
-l (x:xs) = 1 + l xs
+l (x:xs) = 3 + l xs
 
 --test (D x y) = x + y
 
