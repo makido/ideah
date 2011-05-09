@@ -81,9 +81,6 @@ public final class GHCMessageHighlighter implements ExternalAnnotator {
             }
             currentLine = reader.readLine();
         }
-        System.out.println("line: " + line);
-        System.out.println("column: " + column);
-        System.out.println("pos: " + pos);
         return pos;
     }
 }
