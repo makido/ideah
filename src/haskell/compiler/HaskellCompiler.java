@@ -16,7 +16,6 @@ import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Chunk;
@@ -90,10 +89,8 @@ public final class HaskellCompiler implements TranslatingCompiler {
         List<OutputItem> output = new ArrayList<OutputItem>();
         for (VirtualFile file : toCompile) {
             for (GHCMessage message : LaunchGHC.getGHCMessages(file.getPath())) {
-                System.out.println(new File(message.getFileName()).getPath());
                 context.addMessage(
                         CompilerMessageCategory.ERROR, message.getErrorMessage(),
-//                        LocalFileSystem.getInstance().findFileByIoFile(new File(message.getFileName())).getUrl(),
                         new File(message.getFileName()).getPath(),
                         message.getStartLine(), message.getStartColumn()
                 );

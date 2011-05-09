@@ -1,6 +1,6 @@
 package haskell.compiler;
 
-final class GHCMessage {
+public final class GHCMessage {
 
     private int startLine;
     private int endLine;
@@ -10,7 +10,7 @@ final class GHCMessage {
     private final boolean isWarning;
     private final String fileName;
 
-    GHCMessage(String ghcError) {
+    public GHCMessage(String ghcError) {
         String newLine = System.getProperty("line.separator");
         int newLineIndex = ghcError.indexOf(newLine);
         fileName = ghcError.substring(0, newLineIndex).trim();
@@ -28,27 +28,27 @@ final class GHCMessage {
         endColumn = Integer.parseInt(lineColumnStrings[3]);
     }
 
-    int getStartLine() {
+    public int getStartLine() {
         return startLine;
     }
 
-    int getEndLine() {
+    public int getEndLine() {
         return endLine;
     }
 
-    int getStartColumn() {
+    public int getStartColumn() {
         return startColumn;
     }
 
-    int getEndColumn() {
+    public int getEndColumn() {
         return endColumn;
     }
 
-    String getErrorMessage() {
+    public String getErrorMessage() {
         return errorMessage;
     }
 
-    boolean isWarning() {
+    public boolean isWarning() {
         return isWarning;
     }
 

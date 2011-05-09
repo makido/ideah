@@ -35,6 +35,7 @@
                            implementationClass="haskell.highlighter.HaskellBraceMatcher"/>
         <lang.commenter language="Haskell" implementationClass="haskell.highlighter.HaskellCommenter"/>
         <lang.parserDefinition language="Haskell" implementationClass="haskell.parser.HaskellParserDefinition"/>
+        <externalAnnotator implementationClass="haskell.annotator.GHCMessageHighlighter" language="Haskell"/>
 
         <sdkType id="GHC" implementation="haskell.compiler.HaskellSdkType"/>
         <moduleType id="HASKELL_MODULE" classpathProvider="false" implementationClass="haskell.module.HaskellModuleType"/>
