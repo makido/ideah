@@ -24,16 +24,14 @@ public final class GHCMessageHighlighter implements ExternalAnnotator {
             List<GHCMessage> ghcMessages = LaunchGHC.getGHCMessages(file.getPath());
             int warningLength = "Warning: ".length();
             for (GHCMessage ghcMessage : ghcMessages) {
+                TextRange range = new TextRange(
+                    getPos(file, ghcMessage.getStartLine(), ghcMessage.getEndColumn()),
+                    getPos(file, ghcMessage.getEndLine(), ghcMessage.getEndColumn()));
+                String message = ghcMessage.getErrorMessage();
                 if (ghcMessage.isWarning()) {
-                    annotationHolder.createWarningAnnotation(new TextRange(
-                            getPos(file, ghcMessage.getStartLine(), ghcMessage.getEndColumn()),
-                            getPos(file, ghcMessage.getEndLine(), ghcMessage.getEndColumn())),
-                            ghcMessage.getErrorMessage().substring(warningLength));
+                    annotationHolder.createWarningAnnotation(range, message.substring(warningLength));
                 } else {
-                    annotationHolder.createErrorAnnotation(new TextRange(
-                            getPos(file, ghcMessage.getStartLine(), ghcMessage.getEndColumn()),
-                            getPos(file, ghcMessage.getEndLine(), ghcMessage.getEndColumn())),
-                            ghcMessage.getErrorMessage());
+                    annotationHolder.createErrorAnnotation(range, message);
                 }
             }
         } catch (NullPointerException e) {
