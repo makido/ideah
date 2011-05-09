@@ -10,6 +10,7 @@ import Data.Maybe
 import FastString
 import Control.Monad (when)
 import Data.Char (isUpper)
+import Data.List (isPrefixOf)
 import System.Console.GetOpt
 import System.FilePath.Posix (dropExtension)
 
@@ -25,19 +26,19 @@ msgStr :: Message -> PrintUnqualified -> String
 msgStr msg unqual = show $ msg (mkErrStyle unqual)
 
 newMsgIndicator = "\f"
-badSrcSpan      = "\b"
 
 output1 :: (MonadIO m) => ErrMsg -> m ()
 output1 msg = do
     let span   = head $ errMsgSpans msg
         unqual = errMsgContext msg
-        lifty  = liftIO . putStrLn
-    lifty newMsgIndicator
-    lifty $ show $ fromMaybe (mkFastString badSrcSpan)
-          $ srcSpanFileName_maybe span
-    lifty $ spanStr span
-    lifty $ msgStr (errMsgShortDoc msg) unqual
-    lifty $ msgStr (errMsgExtraInfo msg) unqual
+        printy = liftIO . putStrLn
+        errMsg = msgStr (errMsgShortDoc msg) unqual
+        isWarn = "Warning:" `isPrefixOf` errMsg
+    printy newMsgIndicator
+    printy $ fromMaybe "?" (fmap unpackFS $ srcSpanFileName_maybe span)
+    printy $ (if isWarn then "W" else "E") ++ spanStr span
+    printy $ msgStr (errMsgShortDoc msg) unqual
+    printy $ msgStr (errMsgExtraInfo msg) unqual
 
 outputBag :: (MonadIO m) => Bag ErrMsg -> m ()
 outputBag msgs = do

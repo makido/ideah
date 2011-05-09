@@ -4,7 +4,6 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
-import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.TranslatingCompiler;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -16,6 +15,7 @@ import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Chunk;
@@ -23,8 +23,6 @@ import haskell.HaskellFileType;
 import haskell.module.HaskellModuleType;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.text.MessageFormat;
 import java.util.*;
 
@@ -83,16 +81,21 @@ public final class HaskellCompiler implements TranslatingCompiler {
             : compileContext.getModuleOutputDirectory(module);
     }
 
-    private void compileFiles(CompileContext context, Module module, List<VirtualFile> toCompile,
-                              OutputSink sink, boolean tests) {
+    private static void compileFiles(CompileContext context, Module module, List<VirtualFile> toCompile,
+                                     OutputSink sink, boolean tests) {
+        VirtualFile ghcLib = LaunchGHC.getLibPath(module);
+        if (ghcLib == null)
+            return;
         VirtualFile outputDir = getMainOutput(context, module, tests);
         List<OutputItem> output = new ArrayList<OutputItem>();
         for (VirtualFile file : toCompile) {
-            for (GHCMessage message : LaunchGHC.getGHCMessages(file.getPath())) {
+            for (GHCMessage message : LaunchGHC.getGHCMessages(ghcLib, outputDir, file.getPath())) {
+                VirtualFile errFile = LocalFileSystem.getInstance().findFileByPath(message.getFileName());
+                String url = errFile == null ? message.getFileName() : errFile.getUrl();
                 context.addMessage(
-                        CompilerMessageCategory.ERROR, message.getErrorMessage(),
-                        new File(message.getFileName()).getPath(),
-                        message.getStartLine(), message.getStartColumn()
+                    message.getCategory(), message.getErrorMessage(),
+                    url,
+                    message.getStartLine(), message.getStartColumn()
                 );
             }
         }

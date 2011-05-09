@@ -5,27 +5,22 @@ import java.util.ArrayList;
 import java.util.List;
 import com.intellij.openapi.diagnostic.Logger;
 
-
 final class GHCMessageReader extends Thread {
 
+    static final String EOLN = "\n";
     private static final Logger LOG = Logger.getInstance("haskell.compiler.GHCMessageReader");
 
     private final InputStream stream;
     private final List<GHCMessage> ghcMessages = new ArrayList<GHCMessage>();
-    protected GHCMessageReader(InputStream stream) {
+
+    GHCMessageReader(InputStream stream) {
         this.stream = stream;
     }
 
     public synchronized void run() {
-        BufferedReader ghcErrorReader = null;
-        try {
-            ghcErrorReader = new BufferedReader(new InputStreamReader(stream, "UTF8"));
-        } catch (UnsupportedEncodingException e) {
-            LOG.error(e);
-        }
         List<StringBuffer> buffers = new ArrayList<StringBuffer>();
         try {
-            String newLine = System.getProperty("line.separator");
+            BufferedReader ghcErrorReader = new BufferedReader(new InputStreamReader(stream, "UTF8"));
             StringBuffer tmpBuffer = new StringBuffer();
             String line = ghcErrorReader.readLine();
             while (line != null) {
@@ -33,7 +28,7 @@ final class GHCMessageReader extends Thread {
                     tmpBuffer = new StringBuffer();
                     buffers.add(tmpBuffer);
                 } else {
-                    tmpBuffer.append(line).append(newLine);
+                    tmpBuffer.append(line).append(EOLN);
                 }
                 line = ghcErrorReader.readLine();
             }
@@ -45,7 +40,7 @@ final class GHCMessageReader extends Thread {
         }
     }
 
-    protected synchronized List<GHCMessage> getGHCMessages() {
+    synchronized List<GHCMessage> getGHCMessages() {
         return ghcMessages;
     }
 }

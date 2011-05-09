@@ -1,36 +1,57 @@
 package haskell.compiler;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 
-import java.io.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
-public class LaunchGHC {
+public final class LaunchGHC {
 
     private static final Logger LOG = Logger.getInstance("haskell.compiler.LaunchGHC");
 
-    public static List<GHCMessage> getGHCMessages(String fileName) {
+    public static List<GHCMessage> getGHCMessages(VirtualFile libPath, VirtualFile output, String fileName) {
         Runtime runtime = Runtime.getRuntime();
         try {
-            Process process = runtime.exec(
-                    "E:\\Dropbox\\Private\\Ideah\\project\\haskell\\err_test.exe " +
-                            "-g \"C:/Program Files (x86)/Haskell Platform/2010.2.0.0/lib/\" " +
-                            "-c \"-W\" " +
-                            fileName);
+            List<String> args = new ArrayList<String>();
+            //String exe = "E:\\Dropbox\\Private\\Ideah\\project\\haskell\\err_test.exe";
+            String exe = "D:\\home\\oleg\\haskell\\idea\\haskell\\haskell\\err_test.exe";
+            args.add(exe);
+            args.addAll(Arrays.asList(
+                "-g", libPath.getPath(),
+                "-c", "-W"
+            ));
+            if (output != null) {
+                args.addAll(Arrays.asList(
+                    "-o", output.getPath()
+                ));
+            }
+            args.add(fileName);
+            Process process = runtime.exec(args.toArray(new String[args.size()]));
             GHCMessageReader stdin = new GHCMessageReader(process.getInputStream());
             GHCMessageReader stderr = new GHCMessageReader(process.getErrorStream());
             stdin.start();
             stderr.start();
             stdin.join();
-            stderr.join();
-            List<GHCMessage> returnList = stdin.getGHCMessages();
-            returnList.addAll(stderr.getGHCMessages());
-            return returnList;
-        } catch (IOException e) {
-            LOG.error(e);
-        } catch (InterruptedException e) {
-            LOG.error(e);
+            return stdin.getGHCMessages();
+        } catch (Exception ex) {
+            LOG.error(ex);
+            return Collections.singletonList(new GHCMessage(ex.toString(), fileName));
         }
-        return null;
+    }
+
+    public static VirtualFile getLibPath(Module module) {
+        Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+        if (sdk == null)
+            return null;
+        VirtualFile sdkHome = sdk.getHomeDirectory();
+        if (sdkHome == null)
+            return null;
+        return sdkHome.findChild("lib");
     }
 }
