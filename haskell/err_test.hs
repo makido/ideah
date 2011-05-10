@@ -76,12 +76,14 @@ doWalk cmdFlags files = do
 -- ./err_test
 --    -g <path>           # ghc path
 --    -o <path>           # output path
+--    -s <path>           # source path
 --    -c "<options>"      # compiler options
 --    -e <file>           # source file to be made executable
 --    <files>             # files to be compiled
 
 data Options = Options
   { ghcPath         :: String
+  , sourcePath      :: String
   , outputPath      :: String
   , compilerOptions :: [String]
   , exeFile         :: Maybe String
@@ -93,18 +95,19 @@ options =
     "GHC path"
   , Option ['o'] ["outpath"]    (ReqArg (\path opt ->
     opt {outputPath = path}) "DIR") "output path"
+  , Option ['s'] ["sourcepath"] (ReqArg (\path opt ->
+    opt {sourcePath = path}) "DIR") "source path"
   , Option ['c'] ["ghcoptions"] (ReqArg (\opts opt ->
     opt {compilerOptions = words opts}) "STRING") "GHC options"
-      -- need to delete quotes?
-      -- STRING possible here?
   , Option ['e'] ["toexe"]      (ReqArg (\file opt -> opt {exeFile = Just file}) "FILE")
     "file to be make executable"
   ]
 
 defaultOpts :: Options
 defaultOpts = Options
-  { ghcPath         = "C:/Program Files (x86)/Haskell Platform/2010.2.0.0/lib/"
+  { ghcPath         = "./"
   , outputPath      = "./"
+  , sourcePath      = "./"
   , compilerOptions = []
   , exeFile         = Nothing
   }
@@ -115,16 +118,17 @@ main = do
     when (not (null errors)) $ ioError $ userError $ concat errors
     let opts                      = foldl (\opt f -> f opt) defaultOpts opts'
         outPath                   = outputPath opts
+        iOption                   = "-i" ++ outPath ++ ":" ++ (sourcePath opts)
         (modules, nonModules)     = foldl (\(ups, lows) file@(f:_)
           -> if isUpper f then (file:ups, lows) else (ups, file:lows))
           ([], []) files
         runGhcPath additionalOpts = runGhc (Just (ghcPath opts))
           . doWalk (compilerOptions opts ++ additionalOpts)
-    runGhcPath ["--make", "-c", "-outputdir " ++ outPath] modules
+    runGhcPath ["--make", "-c", iOption, "-outputdir " ++ outPath] modules
     mapM (\file ->
       let ohiOption opt ext =
             opt ++ outPath ++ "/" ++ (dropExtension file) ++ ext
-      in runGhcPath [ "-c", "-i" ++ outPath, ohiOption "-o " ".o"
+      in runGhcPath [ "-c", iOption, ohiOption "-o " ".o"
                     , ohiOption "-ohi " ".hi"] [file]) nonModules
     case exeFile opts of
       Just toExe -> runGhcPath

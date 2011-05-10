@@ -6,6 +6,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -15,16 +16,18 @@ public final class LaunchGHC {
 
     private static final Logger LOG = Logger.getInstance("haskell.compiler.LaunchGHC");
 
-    public static List<GHCMessage> getGHCMessages(VirtualFile libPath, VirtualFile output, String fileName) {
+    public static List<GHCMessage> getGHCMessages(VirtualFile libPath, VirtualFile output, VirtualFile file) {
         Runtime runtime = Runtime.getRuntime();
+        String fileName = file.getPath();
         try {
             List<String> args = new ArrayList<String>();
-            //String exe = "E:\\Dropbox\\Private\\Ideah\\project\\haskell\\err_test.exe";
-            String exe = "D:\\home\\oleg\\haskell\\idea\\haskell\\haskell\\err_test.exe";
+            String exe = "E:\\Dropbox\\Private\\Ideah\\project\\haskell\\err_test.exe";
+//            String exe = "D:\\home\\oleg\\haskell\\idea\\haskell\\haskell\\err_test.exe";
             args.add(exe);
             args.addAll(Arrays.asList(
                 "-g", libPath.getPath(),
-                "-c", "-W"
+                "-c", "-W",
+                "-s", file.getParent().getPath()
             ));
             if (output != null) {
                 args.addAll(Arrays.asList(
