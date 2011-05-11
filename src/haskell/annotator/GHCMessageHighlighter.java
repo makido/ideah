@@ -13,10 +13,11 @@ import com.intellij.psi.PsiFile;
 import haskell.compiler.GHCMessage;
 import haskell.compiler.LaunchGHC;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
 import java.util.List;
 
 public final class GHCMessageHighlighter implements ExternalAnnotator {
@@ -30,7 +31,7 @@ public final class GHCMessageHighlighter implements ExternalAnnotator {
             ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
             Module module = rootManager.getFileIndex().getModuleForFile(file);
             VirtualFile ghcLib = LaunchGHC.getLibPath(module);
-            List<GHCMessage> ghcMessages = LaunchGHC.getGHCMessages(ghcLib, null, file);
+            List<GHCMessage> ghcMessages = LaunchGHC.getGHCMessages(ghcLib, null, file.getPath(), module, true);
             for (GHCMessage ghcMessage : ghcMessages) {
                 TextRange range = new TextRange(
                     getPos(file, ghcMessage.getStartLine(), ghcMessage.getEndColumn()),
@@ -59,13 +60,19 @@ public final class GHCMessageHighlighter implements ExternalAnnotator {
 
     // todo: something wrong here, if error at the very end of file
     private static int getPos(VirtualFile file, int line, int column) throws IOException {
+        Charset charset = file.getCharset();
+        FileChannel channel = new FileInputStream(file.getPath()).getChannel();
+        ByteBuffer byteBuffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, (int)channel.size());
+        CharBuffer charBuffer = Charset.forName(charset.name()).newDecoder().decode(byteBuffer);
+        String fileContent = charBuffer.toString();
+
         InputStream is = file.getInputStream();
         try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(is, file.getCharset()));
-            String currentLine = reader.readLine();
-            int pos = -2;
+            BufferedReader reader = new BufferedReader(new InputStreamReader(is, charset));
+            int pos = 0;
+            int newlineLength = 0;
             for (int i = 0; i < line; i++) {
-                pos += 2;
+                String currentLine = reader.readLine();
                 if (currentLine != null) {
                     int lineLength = currentLine.length();
                     if (i == line - 1) {
@@ -76,15 +83,23 @@ public final class GHCMessageHighlighter implements ExternalAnnotator {
                         }
                     } else {
                         pos += lineLength - 1;
+                        if (currentLine.length() != 0) {
+                            fileContent = fileContent.substring(currentLine.length() + newlineLength);
+                            newlineLength = getNewlineLength(fileContent);
+                            pos += newlineLength;
+                        }
                     }
                 } else {
                     LOG.error("Error position out of bounds: line " + line);
                 }
-                currentLine = reader.readLine();
             }
             return pos;
         } finally {
             is.close();
         }
+    }
+
+    private static int getNewlineLength(String str) {
+        return str.split(".", 4)[0].length();
     }
 }
