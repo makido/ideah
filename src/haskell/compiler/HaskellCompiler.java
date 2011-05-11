@@ -89,7 +89,7 @@ public final class HaskellCompiler implements TranslatingCompiler {
         VirtualFile outputDir = getMainOutput(context, module, tests);
         List<OutputItem> output = new ArrayList<OutputItem>();
         for (VirtualFile file : toCompile) {
-            for (GHCMessage message : LaunchGHC.getGHCMessages(ghcLib, outputDir, file)) {
+            for (GHCMessage message : LaunchGHC.getGHCMessages(ghcLib, outputDir, file.getPath(), module, tests)) {
                 VirtualFile errFile = LocalFileSystem.getInstance().findFileByPath(message.getFileName());
                 String url = errFile == null ? message.getFileName() : errFile.getUrl();
                 context.addMessage(
