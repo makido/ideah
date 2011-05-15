@@ -18,12 +18,13 @@ public final class LaunchGHC {
         try {
             List<String> args = new ArrayList<String>();
             String exe = "E:\\Dropbox\\Private\\Ideah\\project\\haskell\\err_test.exe";
-//            String exe = "D:\\home\\oleg\\haskell\\idea\\haskell\\haskell\\err_test.exe";
+            //String exe = "D:\\home\\oleg\\haskell\\idea\\haskell\\haskell\\err_test.exe";
             args.add(exe);
-            Set<VirtualFile> sourceRoots = new HashSet<VirtualFile>();
+            // todo: move away from here (or else get libPath from module here too)
+            Set<VirtualFile> sourceRoots = new HashSet<VirtualFile>(); // todo: do not use HashSet for indeterministic order
             sourceRoots.addAll(Arrays.asList(ModuleRootManager.getInstance(module).getSourceRoots(tests)));
             for (VirtualFile sourceRoot : sourceRoots) {
-                VirtualFile[] children = sourceRoot.getChildren();
+                VirtualFile[] children = sourceRoot.getChildren(); // todo: only roots
                 for (VirtualFile child : children) {
                     if (child.isDirectory()) {
                         sourceRoots.add(child);
@@ -59,7 +60,7 @@ public final class LaunchGHC {
         for (VirtualFile root : roots) {
             sourceRoots.append(":").append(root.getPath());
         }
-        return sourceRoots.toString().substring(1);
+        return sourceRoots.toString().substring(1); // todo: no need for toString
     }
 
     public static VirtualFile getLibPath(Module module) {

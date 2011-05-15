@@ -1,9 +1,13 @@
 package haskell.compiler;
 
-import java.io.*;
+import com.intellij.openapi.diagnostic.Logger;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
-import com.intellij.openapi.diagnostic.Logger;
 
 final class GHCMessageReader extends Thread {
 

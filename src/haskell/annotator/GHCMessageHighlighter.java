@@ -25,6 +25,7 @@ public final class GHCMessageHighlighter implements ExternalAnnotator {
     private static final Logger LOG = Logger.getInstance("haskell.annotator.GHCMessageHighlighter");
 
     public void annotate(PsiFile psiFile, AnnotationHolder annotationHolder) {
+        // todo: use psiFile.getText() for parsing
         VirtualFile file = psiFile.getVirtualFile();
         try {
             Project project = psiFile.getProject();
@@ -61,7 +62,7 @@ public final class GHCMessageHighlighter implements ExternalAnnotator {
     // todo: something wrong here, if error at the very end of file
     private static int getPos(VirtualFile file, int line, int column) throws IOException {
         Charset charset = file.getCharset();
-        FileChannel channel = new FileInputStream(file.getPath()).getChannel();
+        FileChannel channel = new FileInputStream(file.getPath()).getChannel(); // todo: close stream
         ByteBuffer byteBuffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, (int)channel.size());
         CharBuffer charBuffer = Charset.forName(charset.name()).newDecoder().decode(byteBuffer);
         String fileContent = charBuffer.toString();
