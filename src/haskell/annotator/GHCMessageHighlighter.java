@@ -87,23 +87,22 @@ public final class GHCMessageHighlighter implements ExternalAnnotator {
 
     private static int getNewLineLength(String text) {
         String linuxnl = "\r\n";
-        String winnl = "\n";
-        String macnl = "\r";
+        char winnl = '\n';
+        char macnl = '\r';
         if (text.startsWith(linuxnl)) {
             return linuxnl.length();
-        } else if (text.startsWith(winnl)) {
-            return winnl.length();
-        } else if (text.startsWith(macnl)) {
-            return macnl.length();
-        } else {
-            return 0;
         }
+        char c = text.charAt(0);
+        if (c == winnl || c == macnl) {
+            return 1;
+        }
+        return 0;
     }
 
     private static int getNewLineIndex(String text) {
-        int i = text.indexOf("\n");
+        int i = text.indexOf('\n');
         if (i < 0) {
-            i = text.indexOf("\r");
+            i = text.indexOf('\r');
         }
         return i;
     }
