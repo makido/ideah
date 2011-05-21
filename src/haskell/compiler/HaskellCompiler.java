@@ -83,13 +83,12 @@ public final class HaskellCompiler implements TranslatingCompiler {
 
     private static void compileFiles(CompileContext context, Module module, List<VirtualFile> toCompile,
                                      OutputSink sink, boolean tests) {
-        VirtualFile ghcLib = LaunchGHC.getLibPath(module);
-        if (ghcLib == null)
+        if (LaunchGHC.getLibPath(module) == null)
             return;
         VirtualFile outputDir = getMainOutput(context, module, tests);
         List<OutputItem> output = new ArrayList<OutputItem>();
         for (VirtualFile file : toCompile) {
-            for (GHCMessage message : LaunchGHC.getGHCMessages(ghcLib, outputDir, file.getPath(), module, tests)) {
+            for (GHCMessage message : LaunchGHC.getGHCMessages(outputDir, file.getPath(), module, tests)) {
                 VirtualFile errFile = LocalFileSystem.getInstance().findFileByPath(message.getFileName());
                 String url = errFile == null ? message.getFileName() : errFile.getUrl();
                 context.addMessage(

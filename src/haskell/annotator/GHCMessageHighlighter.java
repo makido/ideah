@@ -25,8 +25,7 @@ public final class GHCMessageHighlighter implements ExternalAnnotator {
         Project project = psiFile.getProject();
         ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
         Module module = rootManager.getFileIndex().getModuleForFile(file);
-        VirtualFile ghcLib = LaunchGHC.getLibPath(module);
-        List<GHCMessage> ghcMessages = LaunchGHC.getGHCMessages(ghcLib, null, file.getPath(), module, true);
+        List<GHCMessage> ghcMessages = LaunchGHC.getGHCMessages(null, file.getPath(), module, true);
         for (GHCMessage ghcMessage : ghcMessages) {
             TextRange range = new TextRange(
                 getPos(text, ghcMessage.getStartLine(), ghcMessage.getEndColumn()),
@@ -87,13 +86,11 @@ public final class GHCMessageHighlighter implements ExternalAnnotator {
 
     private static int getNewLineLength(String text) {
         String linuxnl = "\r\n";
-        char winnl = '\n';
-        char macnl = '\r';
         if (text.startsWith(linuxnl)) {
             return 2;
         }
         char c = text.charAt(0);
-        if (c == winnl || c == macnl) {
+        if (c == '\n' || c == '\r') {
             return 1;
         }
         return 0;

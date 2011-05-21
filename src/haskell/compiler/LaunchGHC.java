@@ -12,29 +12,19 @@ public final class LaunchGHC {
 
     private static final Logger LOG = Logger.getInstance("haskell.compiler.LaunchGHC");
 
-    public static List<GHCMessage> getGHCMessages(VirtualFile libPath, VirtualFile output, String fileName,
-                                                  Module module, boolean tests) {
+    public static List<GHCMessage> getGHCMessages(VirtualFile output, String fileName, Module module, boolean tests) {
         Runtime runtime = Runtime.getRuntime();
         try {
             List<String> args = new ArrayList<String>();
             String exe = "E:\\Dropbox\\Private\\Ideah\\project\\haskell\\err_test.exe";
             //String exe = "D:\\home\\oleg\\haskell\\idea\\haskell\\haskell\\err_test.exe";
             args.add(exe);
-            // todo: move away from here (or else get libPath from module here too)
-            Set<VirtualFile> sourceRoots = new HashSet<VirtualFile>(); // todo: do not use HashSet for indeterministic order
+            List<VirtualFile> sourceRoots = new ArrayList<VirtualFile>();
             sourceRoots.addAll(Arrays.asList(ModuleRootManager.getInstance(module).getSourceRoots(tests)));
-            for (VirtualFile sourceRoot : sourceRoots) {
-                VirtualFile[] children = sourceRoot.getChildren(); // todo: only roots
-                for (VirtualFile child : children) {
-                    if (child.isDirectory()) {
-                        sourceRoots.add(child);
-                    }
-                }
-            }
             args.addAll(Arrays.asList(
-                "-g", libPath.getPath(),
-                "-c", "-W",
-                "-s", rootsToString(sourceRoots)
+                    "-g", getLibPath(module).getPath(),
+                    "-c", "-W",
+                    "-s", rootsToString(sourceRoots)
             ));
             if (output != null) {
                 args.addAll(Arrays.asList(
@@ -60,7 +50,7 @@ public final class LaunchGHC {
         for (VirtualFile root : roots) {
             sourceRoots.append(":").append(root.getPath());
         }
-        return sourceRoots.toString().substring(1); // todo: no need for toString
+        return sourceRoots.substring(1);
     }
 
     public static VirtualFile getLibPath(Module module) {
