@@ -90,7 +90,7 @@ public final class GHCMessageHighlighter implements ExternalAnnotator {
         char winnl = '\n';
         char macnl = '\r';
         if (text.startsWith(linuxnl)) {
-            return linuxnl.length();
+            return 2;
         }
         char c = text.charAt(0);
         if (c == winnl || c == macnl) {
