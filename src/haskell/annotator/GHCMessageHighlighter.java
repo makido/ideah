@@ -13,11 +13,6 @@ import com.intellij.psi.PsiFile;
 import haskell.compiler.GHCMessage;
 import haskell.compiler.LaunchGHC;
 
-import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.charset.Charset;
 import java.util.List;
 
 public final class GHCMessageHighlighter implements ExternalAnnotator {
@@ -25,82 +20,91 @@ public final class GHCMessageHighlighter implements ExternalAnnotator {
     private static final Logger LOG = Logger.getInstance("haskell.annotator.GHCMessageHighlighter");
 
     public void annotate(PsiFile psiFile, AnnotationHolder annotationHolder) {
-        // todo: use psiFile.getText() for parsing
         VirtualFile file = psiFile.getVirtualFile();
-        try {
-            Project project = psiFile.getProject();
-            ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
-            Module module = rootManager.getFileIndex().getModuleForFile(file);
-            VirtualFile ghcLib = LaunchGHC.getLibPath(module);
-            List<GHCMessage> ghcMessages = LaunchGHC.getGHCMessages(ghcLib, null, file.getPath(), module, true);
-            for (GHCMessage ghcMessage : ghcMessages) {
-                TextRange range = new TextRange(
-                    getPos(file, ghcMessage.getStartLine(), ghcMessage.getEndColumn()),
-                    getPos(file, ghcMessage.getEndLine(), ghcMessage.getEndColumn())
-                );
-                String message = ghcMessage.getErrorMessage();
-                CompilerMessageCategory category = ghcMessage.getCategory();
-                switch (category) {
-                case ERROR:
-                    annotationHolder.createErrorAnnotation(range, message);
-                    break;
-                case WARNING:
-                    annotationHolder.createWarningAnnotation(range, message);
-                    break;
-                case INFORMATION:
-                    annotationHolder.createInfoAnnotation(range, message);
-                    break;
-                case STATISTICS:
-                    break;
-                }
+        String text = psiFile.getText();
+        Project project = psiFile.getProject();
+        ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
+        Module module = rootManager.getFileIndex().getModuleForFile(file);
+        VirtualFile ghcLib = LaunchGHC.getLibPath(module);
+        List<GHCMessage> ghcMessages = LaunchGHC.getGHCMessages(ghcLib, null, file.getPath(), module, true);
+        for (GHCMessage ghcMessage : ghcMessages) {
+            TextRange range = new TextRange(
+                getPos(text, ghcMessage.getStartLine(), ghcMessage.getEndColumn()),
+                getPos(text, ghcMessage.getEndLine(), ghcMessage.getEndColumn())
+            );
+            String message = ghcMessage.getErrorMessage();
+            CompilerMessageCategory category = ghcMessage.getCategory();
+            switch (category) {
+            case ERROR:
+                annotationHolder.createErrorAnnotation(range, message);
+                break;
+            case WARNING:
+                annotationHolder.createWarningAnnotation(range, message);
+                break;
+            case INFORMATION:
+                annotationHolder.createInfoAnnotation(range, message);
+                break;
+            case STATISTICS:
+                break;
             }
-        } catch (IOException e) {
-            LOG.error(e);
         }
     }
 
-    // todo: something wrong here, if error at the very end of file
-    private static int getPos(VirtualFile file, int line, int column) throws IOException {
-        Charset charset = file.getCharset();
-        FileChannel channel = new FileInputStream(file.getPath()).getChannel(); // todo: close stream
-        ByteBuffer byteBuffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, (int)channel.size());
-        CharBuffer charBuffer = Charset.forName(charset.name()).newDecoder().decode(byteBuffer);
-        String fileContent = charBuffer.toString();
-
-        InputStream is = file.getInputStream();
-        try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(is, charset));
-            int pos = 0;
-            int newlineLength = 0;
-            for (int i = 0; i < line; i++) {
-                String currentLine = reader.readLine();
-                if (currentLine != null) {
-                    int lineLength = currentLine.length();
-                    if (i == line - 1) {
-                        if (column <= lineLength) {
-                            pos += column - 1;
-                        } else {
-                            LOG.error("Error position out of bounds: line " + line + ", column " + column);
-                        }
+    private static int getPos(String text, int line, int column) {
+        int pos = 0;
+        int linesLeft = line - 1;
+        while (linesLeft >= 0) {
+            int newLineLength = getNewLineLength(text);
+            if (linesLeft == 0) {
+                int newLineIndex = getNewLineIndex(text);
+                if (column >= (newLineIndex >= 0 ? text.substring(0, newLineIndex) : text).length()) {
+                    pos += column;
+                } else {
+                    outOfBoundsError(line, column);
+                }
+                break;
+            } else {
+                if (text.length() > 0) {
+                    if (newLineLength > 0) {
+                        text = text.substring(newLineLength);
+                        pos += newLineLength;
+                        linesLeft--;
                     } else {
-                        pos += lineLength - 1;
-                        if (currentLine.length() != 0) {
-                            fileContent = fileContent.substring(currentLine.length() + newlineLength);
-                            newlineLength = getNewlineLength(fileContent);
-                            pos += newlineLength;
-                        }
+                        text = text.substring(1);
+                        pos++;
                     }
                 } else {
-                    LOG.error("Error position out of bounds: line " + line);
+                    outOfBoundsError(line, column);
                 }
             }
-            return pos;
-        } finally {
-            is.close();
+        }
+        return pos - 1;
+    }
+
+    private static void outOfBoundsError(int line, int column) {
+        LOG.error("Error position out of bounds: line " + line + ", column " + column);
+    }
+
+    private static int getNewLineLength(String text) {
+        String linuxnl = "\r\n";
+        String winnl = "\n";
+        String macnl = "\r";
+        if (text.startsWith(linuxnl)) {
+            return linuxnl.length();
+        } else if (text.startsWith(winnl)) {
+            return winnl.length();
+        } else if (text.startsWith(macnl)) {
+            return macnl.length();
+        } else {
+            return 0;
         }
     }
 
-    private static int getNewlineLength(String str) {
-        return str.split(".", 4)[0].length();
+    private static int getNewLineIndex(String text) {
+        int i = text.indexOf("\n");
+        if (i < 0) {
+            i = text.indexOf("\r");
+        }
+        return i;
     }
 }
