@@ -8,11 +8,12 @@ import System.Environment
 import SrcLoc
 import Data.Maybe
 import FastString
-import Control.Monad (when)
+import Control.Monad (unless)
 import Data.Char (isUpper)
-import Data.List (isPrefixOf)
+import Data.List (isPrefixOf, partition)
 import System.Console.GetOpt
 import System.FilePath.Posix (dropExtension)
+import System.FilePath (takeBaseName)
 
 locStr :: SrcLoc -> String
 locStr loc = if isGoodSrcLoc loc then show (srcLocLine loc) ++ ":"
@@ -57,12 +58,13 @@ catcher err = do
     output err
     return Failed
 
-doWalk :: [String] -> [String] -> Ghc ()
-doWalk cmdFlags files = do
+doWalk :: [String] -> Bool -> [String] -> Ghc ()
+doWalk cmdFlags skipOut files = do
     flg <- getSessionDynFlags
     (flg, _, _) <- parseDynamicFlags flg (map noLoc cmdFlags)
-    setSessionDynFlags
-      (flg { hscTarget = HscNothing, ghcLink = NoLink })
+    setSessionDynFlags $ if skipOut  
+       then flg { hscTarget = HscNothing, ghcLink = NoLink }
+       else flg { ghcLink = NoLink }
     mapM_ (\file -> addTarget Target {
         targetId = TargetFile file Nothing
       , targetAllowObjCode = False
@@ -105,9 +107,9 @@ options =
 
 defaultOpts :: Options
 defaultOpts = Options
-  { ghcPath         = "./"
-  , outputPath      = "./"
-  , sourcePath      = "./"
+  { ghcPath         = ""
+  , outputPath      = ""
+  , sourcePath      = ""
   , compilerOptions = []
   , exeFile         = Nothing
   }
@@ -115,23 +117,25 @@ defaultOpts = Options
 main = do
     args <- getArgs
     let (opts', files, errors)     = getOpt Permute options args
-    when (not (null errors)) $ ioError $ userError $ concat errors
+    unless (null errors) $ ioError $ userError $ concat errors
     let opts                      = foldl (\opt f -> f opt) defaultOpts opts'
         outPath                   = outputPath opts
-        iOption                   = "-i" ++ outPath ++ ":" ++ (sourcePath opts)
-        (modules, nonModules)     = foldl (\(ups, lows) file@(f:_)
-          -> if isUpper f then (file:ups, lows) else (ups, file:lows))
-          ([], []) files
-        runGhcPath additionalOpts = runGhc (Just (ghcPath opts))
-          . doWalk (compilerOptions opts ++ additionalOpts)
-    runGhcPath ["--make", "-c", iOption, "-outputdir " ++ outPath] modules
-    mapM (\file ->
-      let ohiOption opt ext =
-            opt ++ outPath ++ "/" ++ (dropExtension file) ++ ext
-      in runGhcPath [ "-c", iOption, ohiOption "-o " ".o"
-                    , ohiOption "-ohi " ".hi"] [file]) nonModules
+        iOption                   = "-i" ++ outPath ++ ":" ++ sourcePath opts
+        (modules, nonModules)     = partition
+          (isUpper . head . takeBaseName) files
+        skipOut = null outPath
+        runGhcPath additionalOpts outputOpts = runGhc (Just (ghcPath opts))
+          . doWalk (compilerOptions opts ++ additionalOpts ++
+            (if skipOut then [] else outputOpts)) skipOut
+    runGhcPath ["--make", "-c", iOption] ["-outputdir " ++ outPath] modules
+    mapM_ (\file ->
+        let ohiOption opt ext =
+              opt ++ outPath ++ "/" ++ dropExtension file ++ ext
+        in runGhcPath [ "-c", iOption]
+                      [ohiOption "-o " ".o", ohiOption "-ohi " ".hi"] [file])
+      nonModules
     case exeFile opts of
-      Just toExe -> runGhcPath
+      Just toExe -> runGhcPath []
         (("-o " ++ outPath ++ "/" ++ dropExtension toExe ++ ".exe")
         : map ((++ ".o") . dropExtension) modules)
         [toExe]
