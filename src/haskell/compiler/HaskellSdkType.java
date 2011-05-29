@@ -6,11 +6,15 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.HashMap;
+import haskell.util.ProcessLauncher;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.StringReader;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -102,18 +106,15 @@ public final class HaskellSdkType extends SdkType {
         }
         try {
             // todo: check for Linux
-            String[] command = new String[] {homePath + File.separator + "bin" + File.separator + "ghc", "--version"};
-            Process process = Runtime.getRuntime().exec(command);
-            BufferedReader rdr = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            // todo: use threads to consume stdout/stderr
+            String output = new ProcessLauncher(
+                homePath + File.separator + "bin" + File.separator + "ghc",
+                "--version"
+            ).getStdOut();
+            BufferedReader rdr = new BufferedReader(new StringReader(output));
             String line = rdr.readLine();
-            try {
-                process.waitFor();
-            } catch (InterruptedException e) {
-                process.destroy();
-            }
+            rdr.close();
             return line;
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             // ignore
         }
         return null;

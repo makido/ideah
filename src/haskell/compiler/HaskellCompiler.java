@@ -94,7 +94,7 @@ public final class HaskellCompiler implements TranslatingCompiler {
                 context.addMessage(
                     message.getCategory(), message.getErrorMessage(),
                     url,
-                    message.getStartLine(), message.getStartColumn()
+                    message.getRange().startLine, message.getRange().startColumn
                 );
             }
         }

@@ -121,23 +121,21 @@ main = do
     let opts                      = foldl (\opt f -> f opt) defaultOpts opts'
         outPath                   = outputPath opts
         iOption                   = "-i" ++ outPath ++ ":" ++ sourcePath opts
-        (modules, nonModules)     = partition
-          (isUpper . head . takeBaseName) files
+        (modules, nonModules)     = partition (isUpper . head . takeBaseName) files
         skipOut = null outPath
         runGhcPath additionalOpts outputOpts = runGhc (Just (ghcPath opts))
           . doWalk (compilerOptions opts ++ additionalOpts ++
             (if skipOut then [] else outputOpts)) skipOut
     runGhcPath ["--make", "-c", iOption] ["-outputdir " ++ outPath] modules
     mapM_ (\file ->
-        let ohiOption opt ext =
-              opt ++ outPath ++ "/" ++ dropExtension file ++ ext
+        let ohiOption opt ext = opt ++ outPath ++ "/" ++ dropExtension file ++ ext
         in runGhcPath [ "-c", iOption]
                       [ohiOption "-o " ".o", ohiOption "-ohi " ".hi"] [file])
       nonModules
     case exeFile opts of
       Just toExe -> runGhcPath []
-        (("-o " ++ outPath ++ "/" ++ dropExtension toExe ++ ".exe")
-        : map ((++ ".o") . dropExtension) modules)
-        [toExe]
+          (("-o " ++ outPath ++ "/" ++ dropExtension toExe ++ ".exe")
+          : map ((++ ".o") . dropExtension) modules)
+          [toExe]
       _          -> return ()
     return ()

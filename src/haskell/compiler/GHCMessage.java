@@ -1,30 +1,17 @@
 package haskell.compiler;
 
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import haskell.util.LineColRange;
 
 public final class GHCMessage {
 
-    private final int startLine;
-    private final int endLine;
-    private final int startColumn;
-    private final int endColumn;
+    private final LineColRange range;
     private final String errorMessage;
     private final CompilerMessageCategory category;
     private final String fileName;
 
-    private static int parseInt(String str) {
-        str = str.trim();
-        if ("?".equals(str))
-            return 1;
-        return Integer.parseInt(str);
-    }
-
-    private static int column(int value) {
-        return value <= 0 ? 1 : value;
-    }
-
     GHCMessage(String ghcError) {
-        String newLine = GHCMessageReader.EOLN;
+        String newLine = LaunchGHC.EOLN;
         int newLineIndex = ghcError.indexOf(newLine);
         fileName = ghcError.substring(0, newLineIndex);
 
@@ -40,40 +27,21 @@ public final class GHCMessage {
         } else {
             cmc = CompilerMessageCategory.ERROR;
         }
-        String[] lineColumnStrings = posString.split("[-:]");
-        startLine = parseInt(lineColumnStrings[0]);
-        startColumn = column(parseInt(lineColumnStrings[1]));
-        endLine = parseInt(lineColumnStrings[2]);
-        endColumn = column(parseInt(lineColumnStrings[3]));
+        range = new LineColRange(posString);
 
         errorMessage = ghcError.substring(nextNewLineIndex + newLine.length());
         category = cmc;
     }
 
     GHCMessage(String errorMessage, String fileName) {
-        this.startLine = 1;
-        this.endLine = 1;
-        this.startColumn = 1;
-        this.endColumn = 1;
+        this.range = new LineColRange(1, 1, 1, 1);
         this.errorMessage = errorMessage;
         this.category = CompilerMessageCategory.ERROR;
         this.fileName = fileName;
     }
 
-    public int getStartLine() {
-        return startLine;
-    }
-
-    public int getEndLine() {
-        return endLine;
-    }
-
-    public int getStartColumn() {
-        return startColumn;
-    }
-
-    public int getEndColumn() {
-        return endColumn;
+    public LineColRange getRange() {
+        return range;
     }
 
     public String getErrorMessage() {
