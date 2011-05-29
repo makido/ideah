@@ -17,9 +17,11 @@ doWalk files = do
     g <- depanal [] True
     parsed <- parseModule $ head g
     let md = unLoc $ pm_parsed_source parsed
+{-
     case hsmodName md of
         Just mn -> liftIO $ putStrLn $ spanStr $ getLoc mn
         _ -> return ()
+-}
     let decls = hsmodDecls md
     let prDecl decl = liftIO $ putStrLn $ spanStr $ getLoc decl
     mapM_ prDecl decls

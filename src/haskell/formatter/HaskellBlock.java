@@ -31,7 +31,7 @@ final class HaskellBlock implements Block {
     }
 
     public Indent getIndent() {
-        return null; // todo
+        return Indent.getNoneIndent(); // todo
     }
 
     public Alignment getAlignment() {
@@ -39,7 +39,7 @@ final class HaskellBlock implements Block {
     }
 
     public Spacing getSpacing(Block child1, Block child2) {
-        return null; // todo
+        return Spacing.createSpacing(1, 2, 1, true, 2); // todo
     }
 
     @NotNull
@@ -52,6 +52,6 @@ final class HaskellBlock implements Block {
     }
 
     public boolean isLeaf() {
-        return false; // todo
+        return subBlocks.isEmpty();
     }
 }

@@ -24,8 +24,7 @@ public final class LaunchGHC {
             //String exe = "E:\\Dropbox\\Private\\Ideah\\project\\haskell\\err_test.exe";
             String exe = "D:\\home\\oleg\\haskell\\idea\\haskell\\haskell\\err_test.exe";
             args.add(exe);
-            List<VirtualFile> sourceRoots = new ArrayList<VirtualFile>();
-            sourceRoots.addAll(Arrays.asList(ModuleRootManager.getInstance(module).getSourceRoots(tests)));
+            VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(tests);
             args.addAll(Arrays.asList(
                 "-g", getLibPath(module).getPath(),
                 "-c", "-W",
@@ -46,7 +45,7 @@ public final class LaunchGHC {
         }
     }
 
-    private static String rootsToString(Collection<VirtualFile> roots) {
+    private static String rootsToString(VirtualFile[] roots) {
         StringBuilder sourceRoots = new StringBuilder();
         for (VirtualFile root : roots) {
             sourceRoots.append(":").append(root.getPath());
