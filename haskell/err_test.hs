@@ -12,8 +12,8 @@ import Control.Monad (unless)
 import Data.Char (isUpper)
 import Data.List (isPrefixOf, partition)
 import System.Console.GetOpt
-import System.FilePath.Posix (dropExtension)
-import System.FilePath (takeBaseName)
+--import System.FilePath.Posix (dropExtension)
+import System.FilePath
 
 locStr :: SrcLoc -> String
 locStr loc = if isGoodSrcLoc loc then show (srcLocLine loc) ++ ":"
@@ -116,25 +116,29 @@ defaultOpts = Options
 
 main = do
     args <- getArgs
-    let (opts', files, errors)     = getOpt Permute options args
+    let (opts', files, errors)    = getOpt Permute options args
     unless (null errors) $ ioError $ userError $ concat errors
     let opts                      = foldl (\opt f -> f opt) defaultOpts opts'
         outPath                   = outputPath opts
         iOption                   = "-i" ++ outPath ++ ":" ++ sourcePath opts
         (modules, nonModules)     = partition (isUpper . head . takeBaseName) files
-        skipOut = null outPath
+        skipOut                   = null outPath
         runGhcPath additionalOpts outputOpts = runGhc (Just (ghcPath opts))
           . doWalk (compilerOptions opts ++ additionalOpts ++
             (if skipOut then [] else outputOpts)) skipOut
-    runGhcPath ["--make", "-c", iOption] ["-outputdir " ++ outPath] modules
+        adjustModulePath file = let rel = makeRelative (sourcePath opts) (takeDirectory file)
+          in if rel == "."
+            then ""
+            else "" -- "/" ++ rel
+    mapM_ (\mod -> runGhcPath ["--make", "-c", iOption] ["-outputdir " ++ outPath ++ adjustModulePath mod] [mod]) modules
     mapM_ (\file ->
-        let ohiOption opt ext = opt ++ outPath ++ "/" ++ dropExtension file ++ ext
+        let ohiOption opt ext = opt ++ outPath ++ adjustModulePath file ++ "/" ++ takeBaseName file ++ ext
         in runGhcPath [ "-c", iOption]
                       [ohiOption "-o " ".o", ohiOption "-ohi " ".hi"] [file])
       nonModules
     case exeFile opts of
       Just toExe -> runGhcPath []
-          (("-o " ++ outPath ++ "/" ++ dropExtension toExe ++ ".exe")
+          (("-o " ++ outPath ++ adjustModulePath toExe ++ "/" ++ takeBaseName toExe ++ ".exe")
           : map ((++ ".o") . dropExtension) modules)
           [toExe]
       _          -> return ()
