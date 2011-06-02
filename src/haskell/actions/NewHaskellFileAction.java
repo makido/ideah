@@ -55,11 +55,18 @@ public final class NewHaskellFileAction extends CreateElementActionBase {
         PsiDirectory moduleDir = directory;
         int moduleInd = newName.indexOf('.');
         while (moduleInd >= 0) {
+            int lastInd = newName.length() - 1;
             if (moduleInd > 0) {
+                if (moduleInd == lastInd) {
+                    newName = newName.substring(0, lastInd);
+                    break;
+                }
                 moduleDir = moduleDir.createSubdirectory(newName.substring(0, moduleInd));
+                newName = newName.substring(moduleInd + 1);
+                moduleInd = newName.indexOf('.');
+            } else if (moduleInd == 0) {
+                throw new IncorrectOperationException("File name cannot be empty.");
             }
-            newName = newName.substring(moduleInd + 1);
-            moduleInd = newName.indexOf('.');
         }
         PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(newName + "." + ext, type, "module " + newName + " where\n\n");
         file = (PsiFile) moduleDir.add(file);
