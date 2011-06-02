@@ -16,6 +16,8 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.impl.file.PsiDirectoryFactory;
+import com.intellij.psi.impl.file.PsiDirectoryFactoryImpl;
 import com.intellij.util.IncorrectOperationException;
 import haskell.HaskellFileType;
 import haskell.module.HaskellModuleType;
@@ -50,8 +52,17 @@ public final class NewHaskellFileAction extends CreateElementActionBase {
         String ext = type.getDefaultExtension();
         Project project = directory.getProject();
         // todo: if module name is not valid, create empty file
+        PsiDirectory moduleDir = directory;
+        int moduleInd = newName.indexOf('.');
+        while (moduleInd >= 0) {
+            if (moduleInd > 0) {
+                moduleDir = moduleDir.createSubdirectory(newName.substring(0, moduleInd));
+            }
+            newName = newName.substring(moduleInd + 1);
+            moduleInd = newName.indexOf('.');
+        }
         PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(newName + "." + ext, type, "module " + newName + " where\n\n");
-        file = (PsiFile) directory.add(file);
+        file = (PsiFile) moduleDir.add(file);
         VirtualFile virtualFile = file.getVirtualFile();
         if (virtualFile != null) {
             FileEditorManager.getInstance(directory.getProject()).openFile(virtualFile, true);
