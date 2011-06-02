@@ -51,24 +51,27 @@ public final class NewHaskellFileAction extends CreateElementActionBase {
         HaskellFileType type = HaskellFileType.INSTANCE;
         String ext = type.getDefaultExtension();
         Project project = directory.getProject();
-        // todo: if module name is not valid, create empty file
         PsiDirectory moduleDir = directory;
-        int moduleInd = newName.indexOf('.');
-        while (moduleInd >= 0) {
-            int lastInd = newName.length() - 1;
-            if (moduleInd > 0) {
-                if (moduleInd == lastInd) {
-                    newName = newName.substring(0, lastInd);
-                    break;
-                }
-                moduleDir = moduleDir.createSubdirectory(newName.substring(0, moduleInd));
-                newName = newName.substring(moduleInd + 1);
-                moduleInd = newName.indexOf('.');
-            } else if (moduleInd == 0) {
-                throw new IncorrectOperationException("File name cannot be empty.");
-            }
+        int length = newName.length() - 1;
+        while (newName.charAt(length) == '.') {
+            newName = newName.substring(0, length);
+            length--;
         }
-        PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(newName + "." + ext, type, "module " + newName + " where\n\n");
+        StringBuilder moduleName = new StringBuilder(); // todo: add names of parent directories
+        int moduleInd = newName.indexOf('.');
+        while (moduleInd > 0) {
+            String dirName = newName.substring(0, moduleInd);
+            moduleDir = moduleDir.createSubdirectory(dirName);
+            newName = newName.substring(moduleInd + 1);
+            moduleName.append(dirName).append('.');
+            moduleInd = newName.indexOf('.');
+        }
+        if (moduleInd == 0) {
+            throw new IncorrectOperationException("File name cannot be empty.");
+        }
+        moduleName.append(newName);
+        PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(newName + "." + ext, type,
+                Character.isUpperCase(newName.charAt(0)) ? "module " + moduleName + " where\n\n" : "");
         file = (PsiFile) moduleDir.add(file);
         VirtualFile virtualFile = file.getVirtualFile();
         if (virtualFile != null) {
