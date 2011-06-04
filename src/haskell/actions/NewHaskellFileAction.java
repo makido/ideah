@@ -41,7 +41,6 @@ public final class NewHaskellFileAction extends CreateElementActionBase {
     }
 
     protected void checkBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException {
-        // todo: check module name for validity
     }
 
     @NotNull

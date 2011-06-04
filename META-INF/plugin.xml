@@ -37,6 +37,8 @@
         <lang.parserDefinition language="Haskell" implementationClass="haskell.parser.HaskellParserDefinition"/>
         <!--<lang.formatter language="Haskell"-->
                         <!--implementationClass="haskell.formatter.HaskellFormattingModelBuilder"/>-->
+        <!--<enterHandlerDelegate implementation="haskell.formatter.HaskellEnterHandler"-->
+                              <!--order="before EnterBetweenBracesHandler"/>-->
         <externalAnnotator implementationClass="haskell.annotator.GHCMessageHighlighter" language="Haskell"/>
 
         <sdkType id="GHC" implementation="haskell.compiler.HaskellSdkType"/>

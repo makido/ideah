@@ -8,6 +8,9 @@ locStr loc = if isGoodSrcLoc loc then show (srcLocLine loc) ++ ":" ++ show (srcL
 spanStr :: SrcSpan -> String
 spanStr span = locStr (srcSpanStart span) ++ "-" ++ locStr (srcSpanEnd span)
 
+prLoc :: (MonadIO m) => String -> Located a -> m ()
+prLoc what loc = liftIO $ putStrLn $ what ++ ": " ++ (spanStr $ getLoc loc)
+
 doWalk :: [String] -> Ghc ()
 doWalk files = do
     flg <- getSessionDynFlags
@@ -22,9 +25,8 @@ doWalk files = do
         Just mn -> liftIO $ putStrLn $ spanStr $ getLoc mn
         _ -> return ()
 -}
-    let decls = hsmodDecls md
-    let prDecl decl = liftIO $ putStrLn $ spanStr $ getLoc decl
-    mapM_ prDecl decls
+    mapM_ (prLoc "import") (hsmodImports md)
+    mapM_ (prLoc "decl") (hsmodDecls md)
     return ()
 
 main = do
