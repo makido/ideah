@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -17,8 +16,6 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.impl.file.PsiDirectoryFactory;
-import com.intellij.psi.impl.file.PsiDirectoryFactoryImpl;
 import com.intellij.util.IncorrectOperationException;
 import haskell.HaskellFileType;
 import haskell.module.HaskellModuleType;
@@ -58,24 +55,30 @@ public final class NewHaskellFileAction extends CreateElementActionBase {
             newName = newName.substring(0, length);
             length--;
         }
-        String parentModuleName = ProjectRootManager.getInstance(project).getFileIndex().getPackageNameByDirectory(directory.getVirtualFile());
+        boolean needsModuleName = Character.isUpperCase(newName.charAt(newName.lastIndexOf('.') + 1));
         StringBuilder moduleName = new StringBuilder(
-                "".equals(parentModuleName) ? "" : ProjectRootManager.getInstance(project).getFileIndex().getPackageNameByDirectory(directory.getVirtualFile()) + "."
+                "".equals(
+                        ProjectRootManager.getInstance(project).getFileIndex().getPackageNameByDirectory(directory.getVirtualFile())
+                ) || !needsModuleName
+                        ? ""
+                        : ProjectRootManager.getInstance(project).getFileIndex().getPackageNameByDirectory(directory.getVirtualFile()) + "."
         );
         int moduleInd = newName.indexOf('.');
         while (moduleInd > 0) {
             String dirName = newName.substring(0, moduleInd);
             moduleDir = moduleDir.createSubdirectory(dirName);
             newName = newName.substring(moduleInd + 1);
-            moduleName.append(dirName).append('.');
             moduleInd = newName.indexOf('.');
+            if (needsModuleName) {
+                moduleName.append(dirName).append('.');
+            }
         }
         if (moduleInd == 0) {
             throw new IncorrectOperationException("File name cannot be empty.");
         }
         moduleName.append(newName);
         PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(newName + "." + ext, type,
-                Character.isUpperCase(newName.charAt(0)) ? "module " + moduleName + " where\n\n" : "");
+                needsModuleName ? "module " + moduleName + " where\n\n" : "");
         file = (PsiFile) moduleDir.add(file);
         VirtualFile virtualFile = file.getVirtualFile();
         if (virtualFile != null) {
