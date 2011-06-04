@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -57,7 +58,10 @@ public final class NewHaskellFileAction extends CreateElementActionBase {
             newName = newName.substring(0, length);
             length--;
         }
-        StringBuilder moduleName = new StringBuilder(); // todo: add names of parent directories
+        String parentModuleName = ProjectRootManager.getInstance(project).getFileIndex().getPackageNameByDirectory(directory.getVirtualFile());
+        StringBuilder moduleName = new StringBuilder(
+                "".equals(parentModuleName) ? "" : ProjectRootManager.getInstance(project).getFileIndex().getPackageNameByDirectory(directory.getVirtualFile()) + "."
+        );
         int moduleInd = newName.indexOf('.');
         while (moduleInd > 0) {
             String dirName = newName.substring(0, moduleInd);
