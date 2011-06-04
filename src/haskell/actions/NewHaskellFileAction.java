@@ -56,12 +56,11 @@ public final class NewHaskellFileAction extends CreateElementActionBase {
             length--;
         }
         boolean needsModuleName = Character.isUpperCase(newName.charAt(newName.lastIndexOf('.') + 1));
+        String parentPackages = ProjectRootManager.getInstance(project).getFileIndex().getPackageNameByDirectory(directory.getVirtualFile());
         StringBuilder moduleName = new StringBuilder(
-                "".equals(
-                        ProjectRootManager.getInstance(project).getFileIndex().getPackageNameByDirectory(directory.getVirtualFile())
-                ) || !needsModuleName
+                "".equals(parentPackages) || !needsModuleName
                         ? ""
-                        : ProjectRootManager.getInstance(project).getFileIndex().getPackageNameByDirectory(directory.getVirtualFile()) + "."
+                        : parentPackages + "."
         );
         int moduleInd = newName.indexOf('.');
         while (moduleInd > 0) {
