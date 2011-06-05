@@ -45,6 +45,9 @@ public final class NewHaskellFileAction extends CreateElementActionBase {
 
     @NotNull
     protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
+        if ("".equals(newName)) {
+            throw new IncorrectOperationException("A name should be specified.");
+        }
         HaskellFileType type = HaskellFileType.INSTANCE;
         String ext = type.getDefaultExtension();
         Project project = directory.getProject();
@@ -54,29 +57,32 @@ public final class NewHaskellFileAction extends CreateElementActionBase {
             newName = newName.substring(0, length);
             length--;
         }
-        boolean needsModuleName = Character.isUpperCase(newName.charAt(newName.lastIndexOf('.') + 1));
+        String[] fileNames = newName.split("\\.");
+        int depth = fileNames.length;
+        String moduleName = fileNames[depth - 1];
+        boolean needsModuleName = Character.isUpperCase(moduleName.charAt(0));
         String parentPackages = ProjectRootManager.getInstance(project).getFileIndex().getPackageNameByDirectory(directory.getVirtualFile());
-        StringBuilder moduleName = new StringBuilder(
+        StringBuilder packages = new StringBuilder(
                 "".equals(parentPackages) || !needsModuleName
                         ? ""
                         : parentPackages + "."
         );
-        int moduleInd = newName.indexOf('.');
-        while (moduleInd > 0) {
-            String dirName = newName.substring(0, moduleInd);
-            moduleDir = moduleDir.createSubdirectory(dirName);
-            newName = newName.substring(moduleInd + 1);
-            moduleInd = newName.indexOf('.');
+        for (int i = 0; i < depth - 1; i++) {
+            String dirName = fileNames[i];
+            if ("".equals(dirName)) {
+                throw new IncorrectOperationException("File name cannot be empty.");
+            }
+            PsiDirectory subDir = moduleDir.findSubdirectory(dirName);
+            moduleDir = subDir == null ? moduleDir.createSubdirectory(dirName) : subDir;
             if (needsModuleName) {
-                moduleName.append(dirName).append('.');
+                packages.append(dirName).append('.');
             }
         }
-        if (moduleInd == 0) {
-            throw new IncorrectOperationException("File name cannot be empty.");
-        }
-        moduleName.append(newName);
-        PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(newName + "." + ext, type,
-                needsModuleName ? "module " + moduleName + " where\n\n" : "");
+        PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(moduleName + "." + ext, type,
+                needsModuleName 
+                        ? "module " + packages + moduleName + " where\n\n" 
+                        : ""
+        );
         file = (PsiFile) moduleDir.add(file);
         VirtualFile virtualFile = file.getVirtualFile();
         if (virtualFile != null) {
