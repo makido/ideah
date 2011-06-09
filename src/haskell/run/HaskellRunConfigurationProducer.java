@@ -75,9 +75,9 @@ public final class HaskellRunConfigurationProducer extends RuntimeConfigurationP
                         if (line.startsWith(main)) {
                             String trim = line.substring(mainLength).trim();
                             if (trim.isEmpty()) {
-                                while (line != null && isEmpty(line)) {
+                                do {
                                     line = reader.readLine();
-                                }
+                                } while (line != null && isEmpty(line));
                                 if (line != null && line.substring(indent + 1).trim().charAt(0) == '=') {
                                     return true;
                                 }

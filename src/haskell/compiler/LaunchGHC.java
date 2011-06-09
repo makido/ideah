@@ -21,8 +21,8 @@ public final class LaunchGHC {
     public static List<GHCMessage> getGHCMessages(VirtualFile output, String fileName, Module module, boolean tests) {
         try {
             List<String> args = new ArrayList<String>();
-            String exe = "E:\\Dropbox\\Private\\Ideah\\project\\haskell\\err_test.exe";
-//            String exe = "D:\\home\\oleg\\haskell\\idea\\haskell\\haskell\\err_test.exe";
+//            String exe = "E:\\Dropbox\\Private\\Ideah\\project\\haskell\\err_test.exe";
+            String exe = "D:\\home\\oleg\\haskell\\idea\\haskell\\haskell\\err_test.exe";
             args.add(exe);
             VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(tests);
             args.addAll(Arrays.asList(
