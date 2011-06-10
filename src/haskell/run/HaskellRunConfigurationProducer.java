@@ -40,7 +40,7 @@ public final class HaskellRunConfigurationProducer extends RuntimeConfigurationP
                     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
                     HaskellRunConfiguration configuration = (HaskellRunConfiguration) settings.getConfiguration();
                     configuration.MAIN_FILE = runFile;
-                    // todo: set working dir
+                    configuration.setWorkingDirectory(project.getBaseDir().getUrl());
                     configuration.setName(configuration.getGeneratedName());
                     return settings;
                 } else {
