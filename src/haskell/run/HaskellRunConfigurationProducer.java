@@ -12,7 +12,6 @@ import haskell.parser.HaskellFile;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.Reader;
 import java.io.StringReader;
 
 public final class HaskellRunConfigurationProducer extends RuntimeConfigurationProducer {
@@ -39,7 +38,7 @@ public final class HaskellRunConfigurationProducer extends RuntimeConfigurationP
                     Project project = file.getProject();
                     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
                     HaskellRunConfiguration configuration = (HaskellRunConfiguration) settings.getConfiguration();
-                    configuration.MAIN_FILE = runFile;
+                    configuration.mainFile = runFile;
                     configuration.setWorkingDirectory(project.getBaseDir().getUrl());
                     configuration.setName(configuration.getGeneratedName());
                     return settings;
