@@ -6,6 +6,7 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import haskell.parser.HaskellFile;
@@ -38,12 +39,14 @@ public final class HaskellRunConfigurationProducer extends RuntimeConfigurationP
                     Project project = file.getProject();
                     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
                     HaskellRunConfiguration configuration = (HaskellRunConfiguration) settings.getConfiguration();
-                    configuration.mainFile = runFile;
-                    configuration.setWorkingDirectory(project.getBaseDir().getUrl());
+                    configuration.setMainFile(runFile);
+                    VirtualFile baseDir = project.getBaseDir();
+                    if (baseDir != null) {
+                        configuration.setWorkingDirectory(baseDir.getPath());
+                    }
                     configuration.setName(configuration.getGeneratedName());
                     return settings;
                 } else {
-                    LOG.error("No main function in module " + hsFile.getName());
                     return null;
                 }
             }
@@ -51,6 +54,7 @@ public final class HaskellRunConfigurationProducer extends RuntimeConfigurationP
         return null;
     }
 
+    // todo: hmmm...
     private static boolean hasMain(String haskellCode) {
         BufferedReader reader = new BufferedReader(new StringReader(haskellCode));
         try {

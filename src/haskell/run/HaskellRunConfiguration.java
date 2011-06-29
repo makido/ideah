@@ -1,53 +1,82 @@
 package haskell.run;
 
-import com.intellij.execution.*;
+import com.intellij.execution.CommonProgramRunConfigurationParameters;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizer;
+import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import haskell.compiler.HaskellSdkType;
 import haskell.parser.HaskellFile;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-// todo: copy from Groovy
-public final class HaskellRunConfiguration extends RuntimeConfiguration implements CommonProgramRunConfigurationParameters {
+public final class HaskellRunConfiguration extends ModuleBasedConfiguration<RunConfigurationModule> implements CommonProgramRunConfigurationParameters {
 
-    private static final String NO_GHC = "GHC location not specified";
+    private String mainFile;
+    private String rtFlags;
+    private String programParameters;
+    private String workingDir;
+    private boolean passParentEnvs = true;
 
-    public HaskellFile mainFile;
-    public String rtFlags;
-    public String programParameters;
-    public String workingDir;
-    public boolean passParentEnvs = true;
+    private final Map<String, String> myEnvs = new LinkedHashMap<String, String>();
 
-    private Map<String, String> myEnvs = new LinkedHashMap<String, String>();
+    public HaskellRunConfiguration(String name, Project project, ConfigurationFactory factory) {
+        super(name, new RunConfigurationModule(project), factory);
+    }
 
     public HaskellRunConfiguration(Project project, ConfigurationFactory factory) {
-        super("Haskell", project, factory);
+        this("Haskell", project, factory);
+    }
+
+    @Nullable
+    public Module getModule() {
+        return getConfigurationModule().getModule();
+    }
+
+    public Collection<Module> getValidModules() {
+        Module[] modules = ModuleManager.getInstance(getProject()).getModules();
+        return Arrays.asList(modules);
+    }
+
+    @Override
+    protected HaskellRunConfiguration createInstance() {
+        return new HaskellRunConfiguration(getName(), getProject(), getFactory());
     }
 
     public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
         return new ConfigurationEditor(getProject());
     }
 
-    public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
-        HaskellState state = new HaskellState(env);
+    public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
+        HaskellCommandLineState state = new HaskellCommandLineState(env, this);
         state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject()));
         return state;
     }
+
+    @Override
+    public void checkConfiguration() throws RuntimeConfigurationException {
+        super.checkConfiguration();
+        // todo: check if mainFile exists?
+        // todo: check if still has main function
+    }
+
+    // getters/setters
 
     public void setProgramParameters(@Nullable String value) {
         programParameters = value;
@@ -58,15 +87,16 @@ public final class HaskellRunConfiguration extends RuntimeConfiguration implemen
     }
 
     public void setWorkingDirectory(@Nullable String value) {
-        workingDir = ExternalizablePath.urlValue(value);
+        workingDir = value;
     }
 
     public String getWorkingDirectory() {
-        return ExternalizablePath.localPathValue(workingDir);
+        return workingDir;
     }
 
     public void setEnvs(@NotNull Map<String, String> envs) {
-        this.myEnvs = envs;
+        this.myEnvs.clear();
+        this.myEnvs.putAll(envs);
     }
 
     @NotNull
@@ -82,74 +112,69 @@ public final class HaskellRunConfiguration extends RuntimeConfiguration implemen
         return passParentEnvs;
     }
 
-    @Override
-    public String suggestedName() {
-        return mainFile == null ? "Unnamed" : mainFile.getName();
+    public String getMainFile() {
+        return mainFile;
     }
 
-    // todo: read/write external???
-
-    private final class HaskellState extends CommandLineState {
-
-        HaskellState(ExecutionEnvironment environment) {
-            super(environment);
+    public void setMainFile(HaskellFile mainFile) {
+        VirtualFile file = mainFile.getVirtualFile();
+        if (file != null) {
+            this.mainFile = file.getPath();
+            Module module = ProjectRootManager.getInstance(mainFile.getProject()).getFileIndex().getModuleForFile(file);
+            setModule(module);
         }
+    }
 
-        protected ProcessHandler startProcess() throws ExecutionException {
-            GeneralCommandLine commandLine;
-            try {
-                commandLine = ApplicationManager.getApplication().runReadAction(new Computable<GeneralCommandLine>() {
-                    public GeneralCommandLine compute() {
-                        try {
-                            Sdk ghc = ProjectRootManager.getInstance(getProject()).getProjectSdk(); // todo: get module SDK
-                            if (ghc == null) {
-                                throw new CantRunException(NO_GHC);
-                            }
+    public String getRuntimeFlags() {
+        return rtFlags;
+    }
 
-                            SdkType sdkType = ghc.getSdkType();
-                            if (!(sdkType instanceof HaskellSdkType)) {
-                                throw new CantRunException(NO_GHC);
-                            }
+    public void setRuntimeFlags(String rtFlags) {
+        this.rtFlags = rtFlags;
+    }
 
-                            String exePath = ghc.getHomePath() + "/bin/runhaskell"; // todo
-                            if (exePath == null) {
-                                throw new CantRunException("Cannot find runhaskell executable");
-                            }
-                            if (mainFile == null) {
-                                throw new CantRunException("Main module is not specified");
-                            }
+    // end of getters/setters
 
-                            GeneralCommandLine commandLine = new GeneralCommandLine();
-                            commandLine.setExePath(exePath);
-                            Charset charset = Charset.forName("UTF-8");
-                            commandLine.setCharset(charset);
-
-                            Map<String, String> env = getEnvs();
-                            commandLine.setEnvParams(env);
-                            commandLine.setPassParentEnvs(isPassParentEnvs());
-
-                            //commandLine.setWorkDirectory(getWorkingDirectory());
-                            commandLine.setWorkDirectory("D:/TEMP/untitled"); // todo!!!
-
-                            VirtualFile file = mainFile.getVirtualFile();
-                            commandLine.addParameter(file.getPath()); // todo
-
-                            // todo: set other parameters/rt flags
-
-                            return commandLine;
-                        } catch (CantRunException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                });
-            } catch (RuntimeException ex) {
-                if (ex.getCause() instanceof CantRunException) {
-                    throw (CantRunException) ex.getCause();
-                } else {
-                    throw ex;
-                }
-            }
-            return JavaCommandLineStateUtil.startProcess(commandLine);
+    @Override
+    public String suggestedName() {
+        VirtualFile file;
+        if (mainFile == null) {
+            file = null;
+        } else {
+            file = LocalFileSystem.getInstance().findFileByPath(mainFile);
         }
+        if (file == null) {
+            return "Unnamed";
+        } else {
+            return file.getName();
+        }
+    }
+
+    public void readExternal(Element element) throws InvalidDataException {
+        PathMacroManager.getInstance(getProject()).expandPaths(element);
+        super.readExternal(element);
+        readModule(element);
+        mainFile = JDOMExternalizer.readString(element, "mainFile");
+        programParameters = JDOMExternalizer.readString(element, "params");
+        rtFlags = JDOMExternalizer.readString(element, "rtFlags");
+        String wrk = JDOMExternalizer.readString(element, "workDir");
+        if (!".".equals(wrk)) {
+            workingDir = wrk;
+        }
+        myEnvs.clear();
+        JDOMExternalizer.readMap(element, myEnvs, null, "env");
+        passParentEnvs = JDOMExternalizer.readBoolean(element, "passParentEnv");
+    }
+
+    public void writeExternal(Element element) throws WriteExternalException {
+        super.writeExternal(element);
+        writeModule(element);
+        JDOMExternalizer.write(element, "mainFile", mainFile);
+        JDOMExternalizer.write(element, "params", programParameters);
+        JDOMExternalizer.write(element, "rtFlags", rtFlags);
+        JDOMExternalizer.write(element, "workDir", workingDir);
+        JDOMExternalizer.writeMap(element, myEnvs, null, "env");
+        JDOMExternalizer.write(element, "passParentEnv", passParentEnvs);
+        PathMacroManager.getInstance(getProject()).collapsePathsRecursively(element);
     }
 }

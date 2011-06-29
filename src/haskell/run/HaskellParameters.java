@@ -1,13 +1,16 @@
 package haskell.run;
 
 import com.intellij.execution.configurations.SimpleProgramParameters;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
-import haskell.parser.HaskellFile;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 
 final class HaskellParameters extends SimpleProgramParameters {
 
     private Sdk ghc;
-    private HaskellFile mainFile;
+    private String mainFile;
+    private String rtFlags;
 
     public Sdk getGhc() {
         return ghc;
@@ -17,11 +20,33 @@ final class HaskellParameters extends SimpleProgramParameters {
         this.ghc = ghc;
     }
 
-    public HaskellFile getMainFile() {
+    public String getMainFile() {
         return mainFile;
     }
 
-    public void setMainFile(HaskellFile mainFile) {
+    public void setMainFile(String mainFile) {
         this.mainFile = mainFile;
+    }
+
+    public String getRuntimeFlags() {
+        return rtFlags;
+    }
+
+    public void setRuntimeFlags(String rtFlags) {
+        this.rtFlags = rtFlags;
+    }
+
+    public void configureByModule(Module module) {
+        setGhc(getModuleGhc(module));
+    }
+
+    public static Sdk getModuleGhc(Module module) {
+        Sdk ghc = ModuleRootManager.getInstance(module).getSdk();
+        if (ghc == null)
+            return null;
+        VirtualFile homeDirectory = ghc.getHomeDirectory();
+        if (homeDirectory == null || !homeDirectory.isValid())
+            return null;
+        return ghc;
     }
 }
