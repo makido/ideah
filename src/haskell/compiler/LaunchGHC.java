@@ -24,8 +24,8 @@ public final class LaunchGHC {
             if (libPath == null)
                 return Collections.emptyList();
             List<String> args = new ArrayList<String>();
-//            String exe = "E:\\Dropbox\\Private\\Ideah\\project\\haskell\\err_test.exe";
-            String exe = "D:\\home\\oleg\\haskell\\idea\\haskell\\haskell\\err_test.exe";
+            String exe = "E:\\Dropbox\\Private\\Ideah\\project\\haskell\\err_test.exe";
+//            String exe = "D:\\home\\oleg\\haskell\\idea\\haskell\\haskell\\err_test.exe";
             args.add(exe);
             VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(tests);
             args.addAll(Arrays.asList(

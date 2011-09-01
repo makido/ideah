@@ -54,47 +54,8 @@ public final class HaskellRunConfigurationProducer extends RuntimeConfigurationP
         return null;
     }
 
-    // todo: hmmm...
     private static boolean hasMain(String haskellCode) {
-        BufferedReader reader = new BufferedReader(new StringReader(haskellCode));
-        try {
-            String line = reader.readLine();
-            while (line != null && (isEmpty(line) || line.startsWith("module "))) {      // it cannot start with 'module' more than once
-                line = reader.readLine();
-            }
-            if (line != null) {
-                int indent = 0;
-                String indentLine = line;
-                while (Character.isSpaceChar(indentLine.charAt(0))) {
-                    indent++;
-                    indentLine = indentLine.substring(1);
-                }
-                String main = "main";
-                int mainLength = main.length();
-                int minLength = mainLength + indent;
-                while (line != null) {
-                    if (line.length() >= minLength) {
-                        line = line.substring(indent);
-                        if (line.startsWith(main)) {
-                            String trim = line.substring(mainLength).trim();
-                            if (trim.isEmpty()) {
-                                do {
-                                    line = reader.readLine();
-                                } while (line != null && isEmpty(line));
-                                if (line != null && line.substring(indent + 1).trim().charAt(0) == '=') {
-                                    return true;
-                                }
-                            } else {
-                                return trim.charAt(0) == '=';
-                            }
-                        }
-                    }
-                    line = reader.readLine();
-                }
-            }
-        } catch (IOException e) {
-            return false;
-        }
+
         return false;
     }
 
