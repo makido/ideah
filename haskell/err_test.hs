@@ -59,8 +59,8 @@ main = do
     let (opts', files, errors)    = getOpt Permute options args
     unless (null errors) $ ioError $ userError $ concat errors
     let opts                                 = foldl (\opt f -> f opt) defaultOpts opts'
+    let ghcpath                              = ghcPath opts
     case mode opts of
-      Compile  -> compile (outputPath opts) (sourcePath opts) (ghcPath opts)
+      Compile  -> compile (outputPath opts) (sourcePath opts) ghcpath
                           (compilerOptions opts) (exeFile opts) files
-      MainPres -> runGhc (Just "C:\\Program Files (x86)\\Haskell Platform\\2010.2.0.0\\lib")
-                         $ checkMain $ head files
+      MainPres -> runGhc (Just ghcpath) $ checkMain $ head files
