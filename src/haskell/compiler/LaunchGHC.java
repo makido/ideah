@@ -4,19 +4,56 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import haskell.util.ProcessLauncher;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.*;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public final class LaunchGHC {
 
     private static final Logger LOG = Logger.getInstance("haskell.compiler.LaunchGHC");
 
     static final String EOLN = "\n";
+    private static final String ERR_TEST = "err_test";
+
+    private static String getErrTestExe() throws IOException {
+        File pluginPath = new File(System.getProperty("user.home"), ".ideah");
+        pluginPath.mkdirs();
+        File errtest = new File(pluginPath, getExeName(ERR_TEST));
+        if (errtest.exists()) {
+            return errtest.getAbsolutePath();
+        } else {
+            Class<?> cls = LaunchGHC.class;
+            String hsName = getHsName(ERR_TEST);
+            InputStream is = cls.getResourceAsStream("/haskell/" + hsName);
+            try {
+                OutputStream os = new FileOutputStream(new File(pluginPath, hsName));
+                try {
+                    StreamUtil.copyStreamContent(is, os);
+                } finally {
+                    os.close();
+                }
+            } finally {
+                is.close();
+            }
+        }
+        return "???";
+    }
+
+    private static String getExeName(String errTest) {
+        return errTest + ".exe";
+    }
+
+    private static String getHsName(String errTest) {
+        return errTest + ".hs";
+    }
+
 
     public static List<GHCMessage> getGHCMessages(VirtualFile output, String fileName, Module module, boolean tests) {
         try {
@@ -24,8 +61,9 @@ public final class LaunchGHC {
             if (libPath == null)
                 return Collections.emptyList();
             List<String> args = new ArrayList<String>();
+//            String exe = "E:\\Dropbox\\Private\\Ideah\\project\\haskell\\err_test.exe";
+//            String errTestExe = getErrTestExe();
             String exe = "E:\\Dropbox\\Private\\Ideah\\project\\haskell\\err_test.exe";
-//            String exe = "D:\\home\\oleg\\haskell\\idea\\haskell\\haskell\\err_test.exe";
             args.add(exe);
             VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(tests);
             args.addAll(Arrays.asList(

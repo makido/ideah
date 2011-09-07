@@ -12,6 +12,8 @@ import FastString
 import Data.Char (isUpper)
 import Data.List (isPrefixOf, partition)
 import System.FilePath
+import DriverPhases
+import DriverPipeline hiding (compile)
 
 compile outPath srcPath ghcPath compilerOptions exeFile files =
   let iOption                              = "-i" ++ outPath ++ ":" ++ srcPath
@@ -38,15 +40,12 @@ doWalk :: [String] -> Bool -> [String] -> Ghc ()
 doWalk cmdFlags skipOut files = do
     flg <- getSessionDynFlags
     (flg, _, _) <- parseDynamicFlags flg (map noLoc cmdFlags)
-    setSessionDynFlags $ if skipOut  
+    setSessionDynFlags $ if skipOut
        then flg { hscTarget = HscNothing, ghcLink = NoLink }
        else flg { ghcLink = NoLink }
-    mapM_ (\file -> addTarget Target {
-        targetId = TargetFile file Nothing
-      , targetAllowObjCode = False
-      , targetContents = Nothing })
-      files
-    loadWithLogger logger LoadAllTargets `gcatch` catcher
+    hsc_env <- GHC.getSession
+    let srcs = zip files $ repeat Nothing
+    oneShot hsc_env StopLn srcs
     warns <- getWarnings
     outputBag warns
     return ()
@@ -81,15 +80,3 @@ outputBag :: (MonadIO m) => Bag ErrMsg -> m ()
 outputBag msgs = do
     mapBagM output1 msgs
     return ()
-
-output :: (MonadIO m) => SourceError -> m ()
-output err = outputBag $ srcErrorMessages err
-
-logger :: WarnErrLogger
-logger Nothing = return ()
-logger (Just err) = output err
-
-catcher :: SourceError -> Ghc SuccessFlag
-catcher err = do
-    output err
-    return Failed

@@ -17,5 +17,5 @@ checkMain file = do
   let hasMain = any isMain $ map unLoc decls
   liftIO $ putStrLn $ if hasMain then "t" else "f"
 
-isMain (ValD (FunBind a _ _ _ _ _)) = showSDoc (ppr $ unLoc a) == "main"
+isMain (ValD (FunBind funid _ _ _ _ _)) = showSDoc (ppr $ unLoc funid) == "main"
 isMain _               = False

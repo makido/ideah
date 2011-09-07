@@ -21,8 +21,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Chunk;
 import haskell.HaskellFileType;
 import haskell.module.HaskellModuleType;
+import haskell.util.Paths;
+import org.apache.xmlbeans.impl.store.Path;
 import org.jetbrains.annotations.NotNull;
 
+import javax.naming.spi.DirectoryManager;
+import java.io.File;
 import java.text.MessageFormat;
 import java.util.*;
 
@@ -39,6 +43,9 @@ public final class HaskellCompiler implements TranslatingCompiler {
         return HaskellFileType.INSTANCE.equals(fileType);
     }
 
+    private void verifyHaskellCode(Module module) {
+    }
+
     public void compile(CompileContext context, Chunk<Module> moduleChunk, VirtualFile[] files, OutputSink sink) {
         Map<Module, List<VirtualFile>> mapModulesToVirtualFiles;
         if (moduleChunk.getNodes().size() == 1) {
@@ -47,6 +54,7 @@ public final class HaskellCompiler implements TranslatingCompiler {
             mapModulesToVirtualFiles = CompilerUtil.buildModuleToFilesMap(context, files);
         }
         for (Module module : moduleChunk.getNodes()) {
+            verifyHaskellCode(module);    // has definitely to be somewhere else
             List<VirtualFile> moduleFiles = mapModulesToVirtualFiles.get(module);
             if (moduleFiles == null) {
                 continue;
@@ -83,7 +91,7 @@ public final class HaskellCompiler implements TranslatingCompiler {
 
     private static void compileFiles(CompileContext context, Module module, List<VirtualFile> toCompile,
                                      OutputSink sink, boolean tests) {
-        if (LaunchGHC.getLibPath(module) == null)
+        if (Paths.getLibPath(module) == null)
             return;
         VirtualFile outputDir = getMainOutput(context, module, tests);
         List<OutputItem> output = new ArrayList<OutputItem>();
