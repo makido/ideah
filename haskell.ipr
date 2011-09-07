@@ -650,6 +650,13 @@
       </item>
     </group>
   </component>
+  <component name="ProjectDictionaryState">
+    <dictionary name="amaurremi">
+      <words>
+        <w>ideah</w>
+      </words>
+    </dictionary>
+  </component>
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/haskell.iml" filepath="$PROJECT_DIR$/haskell.iml" />

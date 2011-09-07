@@ -4,16 +4,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import haskell.util.ProcessLauncher;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public final class LaunchGHC {
 
@@ -22,18 +18,39 @@ public final class LaunchGHC {
     static final String EOLN = "\n";
     private static final String ERR_TEST = "err_test";
 
-    private static String getErrTestExe() throws IOException {
+    private static String getErrTestExe() throws IOException, InterruptedException {
         File pluginPath = new File(System.getProperty("user.home"), ".ideah");
         pluginPath.mkdirs();
-        File errtest = new File(pluginPath, getExeName(ERR_TEST));
-        if (errtest.exists()) {
-            return errtest.getAbsolutePath();
+        File errTestExe = new File(pluginPath, getExeName(ERR_TEST));
+        String hsName = getHsName(ERR_TEST);
+        if (errTestExe.exists()) {
+            File errTestHs = new File(pluginPath, hsName);
+            if (errTestHs.exists()) {
+                Date exeDate = new Date(errTestExe.toURI().toURL().openConnection().getLastModified());
+                Date hsDate = new Date(errTestHs.toURI().toURL().openConnection().getLastModified());
+                if (hsDate.after(exeDate)) {
+                    compileHs(pluginPath, hsName);
+                }
+            }
         } else {
-            Class<?> cls = LaunchGHC.class;
-            String hsName = getHsName(ERR_TEST);
-            InputStream is = cls.getResourceAsStream("/haskell/" + hsName);
+            compileHs(pluginPath, hsName);
+        }
+        return errTestExe.getAbsolutePath();
+    }
+
+    private static void compileHs(File pluginPath, String hsName) throws IOException, InterruptedException {
+        Class<?> cls = LaunchGHC.class;
+        File oneOfHsPluginFiles = new File(cls.getResource("/haskell/" + hsName).getPath());
+        File pluginHaskellDir = new File(oneOfHsPluginFiles.getParent());
+        File[] haskellDirFiles = pluginHaskellDir.listFiles(new FilenameFilter() {
+            public boolean accept(File dir, String name) {
+                return name.endsWith(".hs");
+            }
+        });
+        for (File file : haskellDirFiles) {
+            InputStream is = new FileInputStream(file);
             try {
-                OutputStream os = new FileOutputStream(new File(pluginPath, hsName));
+                OutputStream os = new FileOutputStream(new File(pluginPath, file.getName()));
                 try {
                     StreamUtil.copyStreamContent(is, os);
                 } finally {
@@ -43,7 +60,12 @@ public final class LaunchGHC {
                 is.close();
             }
         }
-        return "???";
+        String absolutePluginPath = pluginPath.getAbsolutePath();
+        ProcessBuilder pb = new ProcessBuilder(
+                "ghc --make -package ghc -i" + absolutePluginPath.replaceAll(":", "\\:") + " " +
+                        absolutePluginPath + System.getProperty("file.separator") + hsName); // replaceAll doesn't work!!!
+        Process p = pb.start();
+        p.waitFor();
     }
 
     private static String getExeName(String errTest) {
@@ -61,10 +83,7 @@ public final class LaunchGHC {
             if (libPath == null)
                 return Collections.emptyList();
             List<String> args = new ArrayList<String>();
-//            String exe = "E:\\Dropbox\\Private\\Ideah\\project\\haskell\\err_test.exe";
-//            String errTestExe = getErrTestExe();
-            String exe = "E:\\Dropbox\\Private\\Ideah\\project\\haskell\\err_test.exe";
-            args.add(exe);
+            args.add(getErrTestExe());
             VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(tests);
             args.addAll(Arrays.asList(
                 "-g", libPath.getPath(),
