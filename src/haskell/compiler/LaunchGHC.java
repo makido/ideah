@@ -41,8 +41,8 @@ public final class LaunchGHC {
 
     private static void compileHs(Module module, File pluginPath, String hsName) throws IOException, InterruptedException {
         Class<?> cls = LaunchGHC.class;
-        File oneOfHsPluginFiles = new File(cls.getResource("/haskell/" + hsName).getPath());
-        File pluginHaskellDir = new File(oneOfHsPluginFiles.getParent());
+        File hsFile = new File(cls.getResource("/haskell/" + hsName).getPath());
+        File pluginHaskellDir = new File(hsFile.getParent());
         File[] haskellDirFiles = pluginHaskellDir.listFiles(new FilenameFilter() {
             public boolean accept(File dir, String name) {
                 return name.endsWith(".hs");
@@ -62,15 +62,16 @@ public final class LaunchGHC {
             }
         }
         String absolutePluginPath = pluginPath.getAbsolutePath();
-        String separator = System.getProperty("file.separator");
         List<String> args = new ArrayList<String>();
         args.addAll(Arrays.asList(Paths.getBinVFile(module).getPath() + "/ghc.exe",
-            "--make", "-package", "ghc",
-            "-i" + absolutePluginPath,
-            absolutePluginPath + separator + hsName));
-        ProcessBuilder pb = new ProcessBuilder(args);
-        Process p = pb.start();
-        p.waitFor();
+                "--make", "-package", "ghc",
+                "-i" + absolutePluginPath,
+                hsFile.getAbsolutePath()));
+        ProcessLauncher launcher = new ProcessLauncher(true, args);
+        String stdOut = launcher.getStdErr();
+        if (!new File(pluginPath, getExeName(ERR_TEST)).exists()) {
+            LOG.error(stdOut);
+        }
     }
 
     private static String getExeName(String errTest) {
@@ -88,9 +89,7 @@ public final class LaunchGHC {
             if (libPath == null)
                 return Collections.emptyList();
             List<String> args = new ArrayList<String>();
-            //String exe = "D:\\home\\oleg\\haskell\\idea\\haskell\\haskell\\err_test.exe";
-            String exe = getErrTestExe(module);
-            args.add(exe);
+            args.add(getErrTestExe(module));
             VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(tests);
             args.addAll(Arrays.asList(
                 "-g", libPath.getPath(),
@@ -103,7 +102,7 @@ public final class LaunchGHC {
                 ));
             }
             args.add(fileName);
-            ProcessLauncher launcher = new ProcessLauncher(args);
+            ProcessLauncher launcher = new ProcessLauncher(false, args);
             String stdOut = launcher.getStdOut();
             return parseMessages(stdOut);
         } catch (Exception ex) {

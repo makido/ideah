@@ -63,7 +63,7 @@ public final class HaskellFormattingModelBuilder implements FormattingModelBuild
             try {
                 // todo: возможно, мы парсим не последнюю версию файла - нужно форсировать сохранение?
                 String path = virtualFile.getPath();
-                String output = new ProcessLauncher("D:\\home\\oleg\\haskell\\idea\\haskell\\haskell\\format.exe", path).getStdOut();
+                String output = new ProcessLauncher(false, "D:\\home\\oleg\\haskell\\idea\\haskell\\haskell\\format.exe", path).getStdOut();
                 BufferedReader rdr = new BufferedReader(new StringReader(output));
                 while (true) {
                     String line = rdr.readLine();
