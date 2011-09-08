@@ -5,6 +5,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import haskell.util.FileNames;
 import haskell.util.Paths;
 import haskell.util.ProcessLauncher;
 
@@ -16,15 +17,15 @@ public final class LaunchGHC {
     private static final Logger LOG = Logger.getInstance("haskell.compiler.LaunchGHC");
 
     static final String EOLN = "\n";
-    private static final String ERR_TEST = "err_test";
 
-    private static String getErrTestExe(Module module) throws IOException, InterruptedException {
-        File pluginPath = new File(System.getProperty("user.home"), ".ideah");
+    public static String getErrTestExe(Module module) throws IOException, InterruptedException {
+        File pluginPath = new File(Paths.getPluginPath());
         pluginPath.mkdirs();
-        File errTestExe = new File(pluginPath, getExeName(ERR_TEST));
-        String hsName = getHsName(ERR_TEST);
+        File errTestExe = new File(FileNames.getFullErrTestExeName());
+        String hsName = FileNames.getHsName(FileNames.ERR_TEST);
         if (errTestExe.exists()) {
-            File errTestHs = new File(pluginPath, hsName);
+            String fullHsName = FileNames.getFullErrTestHsName();
+            File errTestHs = new File(fullHsName);
             if (errTestHs.exists()) {
                 Date exeDate = new Date(errTestExe.lastModified());
                 Date hsDate = new Date(errTestHs.lastModified());
@@ -35,8 +36,7 @@ public final class LaunchGHC {
         } else {
             compileHs(module, pluginPath, hsName);
         }
-
-        return errTestExe.getAbsolutePath();
+        return errTestExe.exists() ? errTestExe.getAbsolutePath() : null;
     }
 
     private static void compileHs(Module module, File pluginPath, String hsName) throws IOException, InterruptedException {
@@ -63,25 +63,19 @@ public final class LaunchGHC {
         }
         String absolutePluginPath = pluginPath.getAbsolutePath();
         List<String> args = new ArrayList<String>();
-        args.addAll(Arrays.asList(Paths.getBinVFile(module).getPath() + "/ghc.exe",
-                "--make", "-package", "ghc",
-                "-i" + absolutePluginPath,
-                hsFile.getAbsolutePath()));
-        ProcessLauncher launcher = new ProcessLauncher(true, args);
-        String stdOut = launcher.getStdErr();
-        if (!new File(pluginPath, getExeName(ERR_TEST)).exists()) {
-            LOG.error(stdOut);
+        if (Paths.getBinVFile(module).getPath() != null) {
+            args.addAll(Arrays.asList(FileNames.getCompilerPath(module),
+                    "--make", "-package", "ghc",
+                    "-i" + absolutePluginPath,
+                    FileNames.getFullErrTestHsName()));
+            ProcessLauncher launcher = new ProcessLauncher(true, args);
+            String stdOut = launcher.getStdErr();
+            System.out.println(FileNames.getFullErrTestExeName());
+            if (!new File(FileNames.getFullErrTestExeName()).exists()) {
+                LOG.error("Compiling " + FileNames.getHsName(FileNames.ERR_TEST) + ":\n" + stdOut);
+            }
         }
     }
-
-    private static String getExeName(String errTest) {
-        return errTest + ".exe";
-    }
-
-    private static String getHsName(String errTest) {
-        return errTest + ".hs";
-    }
-
 
     public static List<GHCMessage> getGHCMessages(VirtualFile output, String fileName, Module module, boolean tests) {
         try {

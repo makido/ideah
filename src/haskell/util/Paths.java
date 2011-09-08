@@ -5,7 +5,13 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 
+import java.io.File;
+
 public class Paths {
+
+    public static final String getPluginPath() {
+        return new File(System.getProperty("user.home"), ".ideah").getAbsolutePath();
+    }
 
     public static VirtualFile getLibVFile(Module module) {
         return getSomeVFile(module, "lib");

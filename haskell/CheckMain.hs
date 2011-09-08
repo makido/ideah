@@ -4,6 +4,8 @@ import GHC
 import Outputable
 import MonadUtils
 
+newMsgIndicator = "\f"
+
 checkMain file = do
   flags <- getSessionDynFlags
   setSessionDynFlags (flags { hscTarget = HscNothing, ghcLink = NoLink })
@@ -15,7 +17,7 @@ checkMain file = do
   parsedMod     <- parseModule summary
   let decls     = hsmodDecls $ unLoc $ parsedSource parsedMod
   let hasMain = any isMain $ map unLoc decls
-  liftIO $ putStrLn $ if hasMain then "t" else "f"
+  liftIO $ putStrLn $ newMsgIndicator ++ (if hasMain then "t" else "f")
 
 isMain (ValD (FunBind funid _ _ _ _ _)) = showSDoc (ppr $ unLoc funid) == "main"
 isMain _               = False
