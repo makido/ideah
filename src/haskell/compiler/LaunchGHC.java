@@ -18,7 +18,7 @@ public final class LaunchGHC {
     static final String EOLN = "\n";
     private static final String ERR_TEST = "err_test";
 
-    private static String getErrTestExe() throws IOException, InterruptedException {
+    private static String getErrTestExe(Module module) throws IOException, InterruptedException {
         File pluginPath = new File(System.getProperty("user.home"), ".ideah");
         pluginPath.mkdirs();
         File errTestExe = new File(pluginPath, getExeName(ERR_TEST));
@@ -29,16 +29,17 @@ public final class LaunchGHC {
                 Date exeDate = new Date(errTestExe.toURI().toURL().openConnection().getLastModified());
                 Date hsDate = new Date(errTestHs.toURI().toURL().openConnection().getLastModified());
                 if (hsDate.after(exeDate)) {
-                    compileHs(pluginPath, hsName);
+                    compileHs(module, pluginPath, hsName);
                 }
             }
         } else {
-            compileHs(pluginPath, hsName);
+            compileHs(module, pluginPath, hsName);
         }
+
         return errTestExe.getAbsolutePath();
     }
 
-    private static void compileHs(File pluginPath, String hsName) throws IOException, InterruptedException {
+    private static void compileHs(Module module, File pluginPath, String hsName) throws IOException, InterruptedException {
         Class<?> cls = LaunchGHC.class;
         File oneOfHsPluginFiles = new File(cls.getResource("/haskell/" + hsName).getPath());
         File pluginHaskellDir = new File(oneOfHsPluginFiles.getParent());
@@ -61,9 +62,13 @@ public final class LaunchGHC {
             }
         }
         String absolutePluginPath = pluginPath.getAbsolutePath();
-        ProcessBuilder pb = new ProcessBuilder(
-                "ghc --make -package ghc -i" + absolutePluginPath.replaceAll(":", "\\:") + " " +
-                        absolutePluginPath + System.getProperty("file.separator") + hsName); // replaceAll doesn't work!!!
+        String separator = System.getProperty("file.separator");
+        List<String> args = new ArrayList<String>();
+        args.addAll(Arrays.asList(getBinVFile(module).getPath() + "/ghc.exe",
+                "--make", "-package", "ghc",
+                "-i" + absolutePluginPath,
+                absolutePluginPath + separator + hsName));
+        ProcessBuilder pb = new ProcessBuilder(args);
         Process p = pb.start();
         p.waitFor();
     }
@@ -79,11 +84,11 @@ public final class LaunchGHC {
 
     public static List<GHCMessage> getGHCMessages(VirtualFile output, String fileName, Module module, boolean tests) {
         try {
-            VirtualFile libPath = getLibPath(module);
+            VirtualFile libPath = getLibVFile(module);
             if (libPath == null)
                 return Collections.emptyList();
             List<String> args = new ArrayList<String>();
-            args.add(getErrTestExe());
+            args.add(getErrTestExe(module));
             VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(tests);
             args.addAll(Arrays.asList(
                 "-g", libPath.getPath(),
@@ -134,13 +139,21 @@ public final class LaunchGHC {
         return ghcMessages;
     }
 
-    public static VirtualFile getLibPath(Module module) {
+    public static VirtualFile getLibVFile(Module module) {
+        return getSomeVFile(module, "lib");
+    }
+
+    public static VirtualFile getBinVFile(Module module) {
+        return getSomeVFile(module, "bin");
+    }
+
+    private static VirtualFile getSomeVFile(Module module, String dirName) {
         Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
         if (sdk == null)
             return null;
         VirtualFile sdkHome = sdk.getHomeDirectory();
         if (sdkHome == null)
             return null;
-        return sdkHome.findChild("lib");
+        return sdkHome.findChild(dirName);
     }
 }
