@@ -2,10 +2,10 @@ package haskell.compiler;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import haskell.util.Paths;
 import haskell.util.ProcessLauncher;
 
 import java.io.*;
@@ -26,8 +26,8 @@ public final class LaunchGHC {
         if (errTestExe.exists()) {
             File errTestHs = new File(pluginPath, hsName);
             if (errTestHs.exists()) {
-                Date exeDate = new Date(errTestExe.toURI().toURL().openConnection().getLastModified());
-                Date hsDate = new Date(errTestHs.toURI().toURL().openConnection().getLastModified());
+                Date exeDate = new Date(errTestExe.lastModified());
+                Date hsDate = new Date(errTestHs.lastModified());
                 if (hsDate.after(exeDate)) {
                     compileHs(module, pluginPath, hsName);
                 }
@@ -64,10 +64,10 @@ public final class LaunchGHC {
         String absolutePluginPath = pluginPath.getAbsolutePath();
         String separator = System.getProperty("file.separator");
         List<String> args = new ArrayList<String>();
-        args.addAll(Arrays.asList(getBinVFile(module).getPath() + "/ghc.exe",
-                "--make", "-package", "ghc",
-                "-i" + absolutePluginPath,
-                absolutePluginPath + separator + hsName));
+        args.addAll(Arrays.asList(Paths.getBinVFile(module).getPath() + "/ghc.exe",
+            "--make", "-package", "ghc",
+            "-i" + absolutePluginPath,
+            absolutePluginPath + separator + hsName));
         ProcessBuilder pb = new ProcessBuilder(args);
         Process p = pb.start();
         p.waitFor();
@@ -84,11 +84,13 @@ public final class LaunchGHC {
 
     public static List<GHCMessage> getGHCMessages(VirtualFile output, String fileName, Module module, boolean tests) {
         try {
-            VirtualFile libPath = getLibVFile(module);
+            VirtualFile libPath = Paths.getLibVFile(module);
             if (libPath == null)
                 return Collections.emptyList();
             List<String> args = new ArrayList<String>();
-            args.add(getErrTestExe(module));
+            //String exe = "D:\\home\\oleg\\haskell\\idea\\haskell\\haskell\\err_test.exe";
+            String exe = getErrTestExe(module);
+            args.add(exe);
             VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(tests);
             args.addAll(Arrays.asList(
                 "-g", libPath.getPath(),
@@ -137,23 +139,5 @@ public final class LaunchGHC {
             ghcMessages.add(new GHCMessage(buffer.toString()));
         }
         return ghcMessages;
-    }
-
-    public static VirtualFile getLibVFile(Module module) {
-        return getSomeVFile(module, "lib");
-    }
-
-    public static VirtualFile getBinVFile(Module module) {
-        return getSomeVFile(module, "bin");
-    }
-
-    private static VirtualFile getSomeVFile(Module module, String dirName) {
-        Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-        if (sdk == null)
-            return null;
-        VirtualFile sdkHome = sdk.getHomeDirectory();
-        if (sdkHome == null)
-            return null;
-        return sdkHome.findChild(dirName);
     }
 }

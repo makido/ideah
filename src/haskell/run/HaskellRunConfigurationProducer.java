@@ -4,22 +4,15 @@ import com.intellij.execution.Location;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import haskell.parser.HaskellFile;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.StringReader;
-
 public final class HaskellRunConfigurationProducer extends RuntimeConfigurationProducer {
 
     private HaskellFile runFile;
-
-    private static final Logger LOG = Logger.getInstance("haskell.run.HaskellRunConfigurationProducer");
 
     public HaskellRunConfigurationProducer() {
         super(HaskellRunConfigurationType.INSTANCE);

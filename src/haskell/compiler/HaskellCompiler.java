@@ -22,11 +22,8 @@ import com.intellij.util.Chunk;
 import haskell.HaskellFileType;
 import haskell.module.HaskellModuleType;
 import haskell.util.Paths;
-import org.apache.xmlbeans.impl.store.Path;
 import org.jetbrains.annotations.NotNull;
 
-import javax.naming.spi.DirectoryManager;
-import java.io.File;
 import java.text.MessageFormat;
 import java.util.*;
 
@@ -91,7 +88,7 @@ public final class HaskellCompiler implements TranslatingCompiler {
 
     private static void compileFiles(CompileContext context, Module module, List<VirtualFile> toCompile,
                                      OutputSink sink, boolean tests) {
-        if (Paths.getLibPath(module) == null)
+        if (Paths.getLibVFile(module) == null)
             return;
         VirtualFile outputDir = getMainOutput(context, module, tests);
         List<OutputItem> output = new ArrayList<OutputItem>();
