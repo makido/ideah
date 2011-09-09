@@ -7,13 +7,16 @@ import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import haskell.compiler.LaunchGHC;
 import haskell.parser.HaskellFile;
 import haskell.util.CompilerLocation;
 import haskell.util.ProcessLauncher;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
@@ -33,6 +36,7 @@ public final class HaskellRunConfigurationProducer extends RuntimeConfigurationP
 
     protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, ConfigurationContext context) {
         PsiFile file = location.getPsiElement().getContainingFile();
+
         if (file instanceof HaskellFile) {
             HaskellFile hsFile = (HaskellFile) file;
             if (hsFile.isMainModule()) {
@@ -69,6 +73,7 @@ public final class HaskellRunConfigurationProducer extends RuntimeConfigurationP
             false,
             compiler.exe,
             "-m", "-g", compiler.libPath,
+            "-s", CompilerLocation.rootsToString(ModuleRootManager.getInstance(module).getSourceRoots(false)),
             filePath
         );
         String stdOut = launcher.getStdOut();

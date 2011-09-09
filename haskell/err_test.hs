@@ -60,7 +60,8 @@ main = do
   unless (null errors) $ ioError $ userError $ concat errors
   let opts    = foldl (\opt f -> f opt) defaultOpts opts'
   let ghcpath = ghcPath opts
+  let srcpath = sourcePath opts
   case mode opts of
-    Compile  -> compile (outputPath opts) (sourcePath opts) ghcpath
+    Compile  -> compile (outputPath opts) srcpath ghcpath
                         (compilerOptions opts) (exeFile opts) files
-    MainPres -> runGhc (Just ghcpath) $ checkMain $ head files
+    MainPres -> runGhc (Just ghcpath) $ checkMain srcpath $ head files

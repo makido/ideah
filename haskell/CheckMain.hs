@@ -3,10 +3,13 @@ module CheckMain where
 import GHC
 import Outputable
 import MonadUtils
+import DynFlags
 
-checkMain file = do
+checkMain srcpath file = do
   flags <- getSessionDynFlags
-  setSessionDynFlags (flags { hscTarget = HscNothing, ghcLink = NoLink })
+  (flags', _, _) <- parseDynamicFlags flags (map noLoc ["-i" ++ srcpath])
+  setSessionDynFlags (flags' { hscTarget    = HscNothing
+                             , ghcLink      = NoLink})
   addTarget Target
     { targetId = TargetFile file Nothing
     , targetAllowObjCode = False
@@ -18,4 +21,4 @@ checkMain file = do
   liftIO $ putStrLn $ if hasMain then "t" else "f"
 
 isMain (ValD (FunBind funid _ _ _ _ _)) = showSDoc (ppr $ unLoc funid) == "main"
-isMain _               = False
+isMain _                                = False

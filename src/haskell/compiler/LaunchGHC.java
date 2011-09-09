@@ -34,7 +34,7 @@ public final class LaunchGHC {
                 "-d",
                 "-g", compiler.libPath,
                 "-c", "-W",
-                "-s", rootsToString(sourceRoots)
+                "-s", CompilerLocation.rootsToString(sourceRoots)
             ));
             if (output != null) {
                 args.addAll(Arrays.asList(
@@ -49,14 +49,6 @@ public final class LaunchGHC {
             LOG.error(ex);
             return Collections.singletonList(new GHCMessage(ex.toString(), fileName));
         }
-    }
-
-    private static String rootsToString(VirtualFile[] roots) {
-        StringBuilder sourceRoots = new StringBuilder();
-        for (VirtualFile root : roots) {
-            sourceRoots.append(":").append(root.getPath());
-        }
-        return sourceRoots.substring(1);
     }
 
     private static List<GHCMessage> parseMessages(String output) throws IOException {

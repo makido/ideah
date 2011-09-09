@@ -93,6 +93,14 @@ public final class CompilerLocation {
         }
     }
 
+    public static String rootsToString(VirtualFile[] roots) {
+        StringBuilder sourceRoots = new StringBuilder();
+        for (VirtualFile root : roots) {
+            sourceRoots.append(":").append(root.getPath());
+        }
+        return sourceRoots.substring(1);
+    }
+
     private static boolean compileHs(File pluginPath, VirtualFile ghcHome, File exe) throws IOException, InterruptedException, URISyntaxException {
         VirtualFile ghcBin = ghcHome.findChild("bin");
         if (ghcBin == null)
