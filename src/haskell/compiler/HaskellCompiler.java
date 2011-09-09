@@ -21,7 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Chunk;
 import haskell.HaskellFileType;
 import haskell.module.HaskellModuleType;
-import haskell.util.Paths;
+import haskell.util.CompilerLocation;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;
@@ -88,7 +88,7 @@ public final class HaskellCompiler implements TranslatingCompiler {
 
     private static void compileFiles(CompileContext context, Module module, List<VirtualFile> toCompile,
                                      OutputSink sink, boolean tests) {
-        if (Paths.getLibVFile(module) == null)
+        if (CompilerLocation.get(module) == null)
             return;
         VirtualFile outputDir = getMainOutput(context, module, tests);
         List<OutputItem> output = new ArrayList<OutputItem>();

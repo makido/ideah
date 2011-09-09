@@ -43,9 +43,15 @@ doWalk cmdFlags skipOut files = do
     setSessionDynFlags $ if skipOut
        then flg { hscTarget = HscNothing, ghcLink = NoLink }
        else flg { ghcLink = NoLink }
-    hsc_env <- GHC.getSession
-    let srcs = zip files $ repeat Nothing
-    oneShot hsc_env StopLn srcs
+--    hsc_env <- GHC.getSession
+--    let srcs = zip files $ repeat Nothing
+--    oneShot hsc_env StopLn srcs
+    mapM_ (\file -> addTarget Target {
+        targetId = TargetFile file Nothing
+      , targetAllowObjCode = False
+      , targetContents = Nothing })
+      files
+    loadWithLogger logger LoadAllTargets `gcatch` catcher
     warns <- getWarnings
     outputBag warns
     return ()
@@ -80,3 +86,15 @@ outputBag :: (MonadIO m) => Bag ErrMsg -> m ()
 outputBag msgs = do
     mapBagM output1 msgs
     return ()
+
+output :: (MonadIO m) => SourceError -> m ()
+output err = outputBag $ srcErrorMessages err
+
+logger :: WarnErrLogger
+logger Nothing = return ()
+logger (Just err) = output err
+
+catcher :: SourceError -> Ghc SuccessFlag
+catcher err = do
+    output err
+    return Failed
