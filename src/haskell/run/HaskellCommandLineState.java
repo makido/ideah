@@ -12,8 +12,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
 import haskell.compiler.HaskellSdkType;
+import haskell.util.CompilerLocation;
 
 import java.nio.charset.Charset;
 import java.util.Map;
@@ -90,6 +92,8 @@ final class HaskellCommandLineState extends CommandLineState {
 
                         commandLine.setWorkDirectory(parameters.getWorkingDirectory());
 
+                        commandLine.addParameter("-i" + CompilerLocation.rootsToString(
+                                ModuleRootManager.getInstance(configuration.getModule()).getSourceRoots(false)));
                         commandLine.addParameter(mainFile); // todo
 
                         // todo: set other parameters/rt flags
