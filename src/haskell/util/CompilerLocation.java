@@ -15,7 +15,7 @@ import java.net.URISyntaxException;
 
 public final class CompilerLocation {
 
-    private static final Logger LOG = Logger.getInstance("haskell.util.Paths");
+    private static final Logger LOG = Logger.getInstance("haskell.util.CompilerLocation");
     private static final String ERR_TEST = "err_test";
 
     private static boolean freshCheckDone = false;

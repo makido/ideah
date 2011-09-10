@@ -7,34 +7,68 @@ import Bag
 import Outputable
 import MonadUtils
 import SrcLoc
+import Data.Char
 import Data.Maybe
 import FastString
-import Data.Char (isUpper)
 import Data.List (isPrefixOf, partition)
 import System.FilePath
-import DriverPhases
-import DriverPipeline hiding (compile)
+import System.Directory
+import System.Info (os)
+import Control.Monad (when)
 
-compile outPath srcPath ghcPath compilerOptions exeFile files =
-  let iOption                              = "-i" ++ outPath ++ ":" ++ srcPath
-      (modules, nonModules)                = partition (isUpper . head . takeBaseName) files
-      skipOut                              = null outPath
-      runGhcPath additionalOpts outputOpts = runGhc (Just ghcPath)
-        . doWalk (compilerOptions ++ additionalOpts ++
-          (if skipOut then [] else outputOpts)) skipOut
-  in do
-      mapM_ (\mod -> runGhcPath ["--make", "-c", iOption] ["-outputdir " ++ outPath] [mod]) modules
-      mapM_ (\file ->
-          let ohiOption opt ext = opt ++ outPath ++ "/" ++ takeBaseName file ++ ext
-          in runGhcPath [ "-c", iOption]
-                        [ohiOption "-o " ".o", ohiOption "-ohi " ".hi"] [file])
-        nonModules
-      case exeFile of
-        Just toExe -> runGhcPath []
-            (("-o " ++ outPath ++ "/" ++ takeBaseName toExe ++ ".exe")
-            : map ((++ ".o") . dropExtension) modules)
-            [toExe]
-        _          -> return ()
+compile outPath srcPath ghcPath compilerOptions files =
+    let 
+        skipOut = null outPath
+
+        options = compilerOptions ++ ["--make"] 
+               ++ if skipOut then ["-i" ++ srcPath]
+                             else ["-i" ++ outPath ++ ":" ++ srcPath, "-outputdir " ++ outPath]
+        
+        compileFile file = runGhc (Just ghcPath) (doWalk options skipOut [file])
+
+        exeExtension = case os of
+            "mingw32" -> "exe"
+            _ -> ""
+
+        outputExe srcFile = (exeFile, outPath </> relPath </> takeFileName exeFile)
+            where exeFile = replaceExtension srcFile exeExtension
+                  relPath = dropFileName $ makeRelative srcPath srcFile
+
+        renameOutput srcFile = do
+            let (exeFile, new) = outputExe srcFile
+            exists <- doesFileExist exeFile
+            when exists $ renameFile exeFile new
+
+        clearOutput ext = do
+            let file = outPath </> addExtension "Main" ext
+            exists <- doesFileExist file
+            when exists $ removeFile file
+
+        needsRecompile srcFile = do
+            let (_, exeFile) = outputExe srcFile
+            exeExists <- doesFileExist exeFile
+            if exeExists
+                then do
+                    srcModified <- getModificationTime srcFile
+                    exeModified <- getModificationTime exeFile
+                    return $ srcModified > exeModified
+                else return True
+
+        compileNonModule srcFile = 
+            if skipOut 
+                then compileFile srcFile
+                else do
+                    recompile <- needsRecompile srcFile
+                    when recompile $ do
+                        compileFile srcFile
+                        clearOutput "o"
+                        clearOutput "hi"
+                        renameOutput srcFile
+
+        (modules, nonModules) = partition (isUpper . head . takeBaseName) files
+    in do
+        mapM_ compileFile modules
+        mapM_ compileNonModule nonModules
 
 doWalk :: [String] -> Bool -> [String] -> Ghc ()
 doWalk cmdFlags skipOut files = do
@@ -42,10 +76,7 @@ doWalk cmdFlags skipOut files = do
     (flg, _, _) <- parseDynamicFlags flg (map noLoc cmdFlags)
     setSessionDynFlags $ if skipOut
        then flg { hscTarget = HscNothing, ghcLink = NoLink }
-       else flg { ghcLink = NoLink }
---    hsc_env <- GHC.getSession
---    let srcs = zip files $ repeat Nothing
---    oneShot hsc_env StopLn srcs
+       else flg
     mapM_ (\file -> addTarget Target {
         targetId = TargetFile file Nothing
       , targetAllowObjCode = False
@@ -57,12 +88,12 @@ doWalk cmdFlags skipOut files = do
     return ()
 
 locStr :: SrcLoc -> String
-locStr loc = if isGoodSrcLoc loc then show (srcLocLine loc) ++ ":"
-  ++ show (srcLocCol loc) else "?"
+locStr loc = if isGoodSrcLoc loc then 
+                 show (srcLocLine loc) ++ ":" ++ show (srcLocCol loc) 
+                 else "?"
 
 spanStr :: SrcSpan -> String
-spanStr span = locStr (srcSpanStart span) ++ "-"
-  ++ locStr (srcSpanEnd span)
+spanStr span = locStr (srcSpanStart span) ++ "-" ++ locStr (srcSpanEnd span)
 
 msgStr :: Message -> PrintUnqualified -> String
 msgStr msg unqual = show $ msg (mkErrStyle unqual)

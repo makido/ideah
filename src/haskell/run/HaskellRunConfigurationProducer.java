@@ -18,7 +18,6 @@ import haskell.util.ProcessLauncher;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 
 public final class HaskellRunConfigurationProducer extends RuntimeConfigurationProducer {
 
@@ -64,7 +63,7 @@ public final class HaskellRunConfigurationProducer extends RuntimeConfigurationP
         return null;
     }
 
-    private static boolean hasMain(String filePath, Module module) throws IOException, InterruptedException, URISyntaxException {
+    private static boolean hasMain(String filePath, Module module) throws IOException, InterruptedException {
         CompilerLocation compiler = CompilerLocation.get(module);
         if (compiler == null) {
             return false;
