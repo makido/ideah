@@ -45,7 +45,6 @@ public final class CompilerLocation {
 
     private static boolean needRecompile(File compilerExe) throws URISyntaxException {
         if (compilerExe.exists()) {
-            long exeLastModified = compilerExe.lastModified();
             if (sourcesLastModified == null) {
                 Long maxModified = null;
                 File[] haskellSources = listHaskellSources();
@@ -59,7 +58,7 @@ public final class CompilerLocation {
                 }
                 sourcesLastModified = maxModified;
             }
-            return sourcesLastModified != null && sourcesLastModified.longValue() > exeLastModified;
+            return sourcesLastModified != null && sourcesLastModified.longValue() > compilerExe.lastModified();
         } else {
             return true;
         }
@@ -76,7 +75,7 @@ public final class CompilerLocation {
         if (ghcLib == null)
             return null;
         try {
-            File pluginPath = new File(new File(System.getProperty("user.home"), ".ideah"), sdk.getName());
+            File pluginPath = new File(new File(System.getProperty("user.home"), ".ideah"), sdk.getVersionString());
             pluginPath.mkdirs();
             File compilerExe = new File(pluginPath, getExeName(ERR_TEST));
             if (needRecompile(compilerExe)) {

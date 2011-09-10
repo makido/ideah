@@ -11,19 +11,14 @@ import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
-import java.io.StringReader;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 // todo: config page - do not include classpath/sourcepath/etc
 public final class HaskellSdkType extends SdkType {
 
     public static final HaskellSdkType INSTANCE = new HaskellSdkType();
-    private static final Pattern VER_PATTERN = Pattern.compile("^(.*) version ([1234567890_.]*)(.*)$");
     private static final Icon GHC_ICON = IconLoader.getIcon("/haskell/haskell_16x16.png"); // todo: another icon?
 
     public HaskellSdkType() {
@@ -73,7 +68,7 @@ public final class HaskellSdkType extends SdkType {
         } else {
             String versionString = getVersionString(sdkHome);
             if (versionString != null) {
-                suggestedName = "GHC " + getVersionNumber(versionString);
+                suggestedName = "GHC " + versionString;
             } else {
                 suggestedName = "Unknown";
             }
@@ -109,24 +104,13 @@ public final class HaskellSdkType extends SdkType {
             String output = new ProcessLauncher(
                 false,
                 homePath + File.separator + "bin" + File.separator + "ghc",
-                "--version"
+                "--numeric-version"
             ).getStdOut();
-            BufferedReader rdr = new BufferedReader(new StringReader(output));
-            String line = rdr.readLine();
-            rdr.close();
-            return line;
+            return output.trim();
         } catch (Exception ex) {
             // ignore
         }
         return null;
-    }
-
-    private static String getVersionNumber(String versionString) {
-        Matcher matcher = VER_PATTERN.matcher(versionString);
-        if (matcher.find()) {
-            return matcher.group(2);
-        }
-        return versionString;
     }
 
     public AdditionalDataConfigurable createAdditionalDataConfigurable(SdkModel sdkModel, SdkModificator sdkModificator) {
@@ -143,6 +127,11 @@ public final class HaskellSdkType extends SdkType {
     @Override
     public Icon getIcon() {
         return GHC_ICON;
+    }
+
+    @Override
+    public Icon getIconForAddAction() {
+        return getIcon();
     }
 
     @Override

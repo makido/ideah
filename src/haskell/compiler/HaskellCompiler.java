@@ -40,9 +40,6 @@ public final class HaskellCompiler implements TranslatingCompiler {
         return HaskellFileType.INSTANCE.equals(fileType);
     }
 
-    private void verifyHaskellCode(Module module) {
-    }
-
     public void compile(CompileContext context, Chunk<Module> moduleChunk, VirtualFile[] files, OutputSink sink) {
         Map<Module, List<VirtualFile>> mapModulesToVirtualFiles;
         if (moduleChunk.getNodes().size() == 1) {
@@ -51,7 +48,6 @@ public final class HaskellCompiler implements TranslatingCompiler {
             mapModulesToVirtualFiles = CompilerUtil.buildModuleToFilesMap(context, files);
         }
         for (Module module : moduleChunk.getNodes()) {
-            verifyHaskellCode(module);    // has definitely to be somewhere else
             List<VirtualFile> moduleFiles = mapModulesToVirtualFiles.get(module);
             if (moduleFiles == null) {
                 continue;
@@ -76,7 +72,6 @@ public final class HaskellCompiler implements TranslatingCompiler {
             if (!toCompileTests.isEmpty()) {
                 compileFiles(context, module, toCompileTests, sink, true);
             }
-
         }
     }
 
@@ -92,6 +87,7 @@ public final class HaskellCompiler implements TranslatingCompiler {
             return;
         VirtualFile outputDir = getMainOutput(context, module, tests);
         List<OutputItem> output = new ArrayList<OutputItem>();
+        // todo: pass all files to compiler at once (more effective?)
         for (VirtualFile file : toCompile) {
             for (GHCMessage message : LaunchGHC.getGHCMessages(outputDir, file.getPath(), module, tests)) {
                 VirtualFile errFile = LocalFileSystem.getInstance().findFileByPath(message.getFileName());
