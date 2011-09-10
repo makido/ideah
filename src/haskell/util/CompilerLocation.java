@@ -18,7 +18,7 @@ public final class CompilerLocation {
     private static final Logger LOG = Logger.getInstance("haskell.util.CompilerLocation");
     private static final String ERR_TEST = "err_test";
 
-    private static boolean freshCheckDone = false;
+    private static Long sourcesLastModified = null;
 
     public final String exe;
     public final String libPath;
@@ -34,13 +34,6 @@ public final class CompilerLocation {
                 : file;
     }
 
-    private static VirtualFile getSdkHome(Module module) {
-        Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-        if (sdk == null)
-            return null;
-        return sdk.getHomeDirectory();
-    }
-
     private static File[] listHaskellSources() throws URISyntaxException {
         File pluginHaskellDir = new File(CompilerLocation.class.getResource("/haskell/").toURI());
         return pluginHaskellDir.listFiles(new FilenameFilter() {
@@ -51,31 +44,39 @@ public final class CompilerLocation {
     }
 
     private static boolean needRecompile(File compilerExe) throws URISyntaxException {
-        if (freshCheckDone)
-            return false;
         if (compilerExe.exists()) {
             long exeLastModified = compilerExe.lastModified();
-            File[] haskellSources = listHaskellSources();
-            for (File file : haskellSources) {
-                if (file.lastModified() > exeLastModified)
-                    return true;
+            if (sourcesLastModified == null) {
+                Long maxModified = null;
+                File[] haskellSources = listHaskellSources();
+                for (File file : haskellSources) {
+                    long lastModified = file.lastModified();
+                    if (maxModified == null) {
+                        maxModified = lastModified;
+                    } else {
+                        maxModified = Math.max(maxModified.longValue(), lastModified);
+                    }
+                }
+                sourcesLastModified = maxModified;
             }
-            freshCheckDone = true;
-            return false;
+            return sourcesLastModified != null && sourcesLastModified.longValue() > exeLastModified;
         } else {
             return true;
         }
     }
 
     public static synchronized CompilerLocation get(Module module) {
-        VirtualFile ghcHome = getSdkHome(module);
+        Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+        if (sdk == null)
+            return null;
+        VirtualFile ghcHome = sdk.getHomeDirectory();
         if (ghcHome == null)
             return null;
         VirtualFile ghcLib = ghcHome.findChild("lib");
         if (ghcLib == null)
             return null;
         try {
-            File pluginPath = new File(System.getProperty("user.home"), ".ideah");
+            File pluginPath = new File(new File(System.getProperty("user.home"), ".ideah"), sdk.getName());
             pluginPath.mkdirs();
             File compilerExe = new File(pluginPath, getExeName(ERR_TEST));
             if (needRecompile(compilerExe)) {
