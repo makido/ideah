@@ -52,7 +52,7 @@ defaultOpts = Options
 main = do
     args <- getArgs
     let (opts', files, errors)    = getOpt Permute options args
-    unless (null $ errors') $ ioError $ userError $ concat errors'
+    unless (null $ errors) $ ioError $ userError $ concat errors
     let opts    = foldl (\opt f -> f opt) defaultOpts opts'
     let ghcpath = ghcPath opts
     let srcpath = sourcePath opts
