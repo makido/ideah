@@ -1,12 +1,10 @@
 package haskell.documentation;
 
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.LazyRangeMarkerFactory;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
@@ -18,10 +16,11 @@ import haskell.psi.api.HPIdent;
 import haskell.util.CompilerLocation;
 import haskell.util.ProcessLauncher;
 
-import java.io.IOException;
 import java.util.List;
 
 public final class HaskellDocumentationProvider implements DocumentationProvider {
+
+    private static final Logger LOG = Logger.getInstance("haskell.documentation.HaskellDocumentationProvider");
 
     public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
         return null;
@@ -46,7 +45,6 @@ public final class HaskellDocumentationProvider implements DocumentationProvider
             int offset = range.getStartOffset();
             int line = doc.getLineNumber(offset);
             int col = offset - doc.getLineStartOffset(line);
-            System.out.println((line + 1) + ":" + (col + 1));
             Module module = ProjectRootManager.getInstance(psiFile.getProject()).getFileIndex().getModuleForFile(file);
             CompilerLocation compiler = CompilerLocation.get(module);
             if (compiler == null) {
@@ -59,12 +57,15 @@ public final class HaskellDocumentationProvider implements DocumentationProvider
                     "-m", "GetIdType",
                     "-g", compiler.libPath,
                     "-s", CompilerLocation.rootsToString(ModuleRootManager.getInstance(module).getSourceRoots(false)),
-                    "-ln", String.valueOf(line + 1), "-col", String.valueOf(col + 1),
+                    "--line-number", String.valueOf(line + 1), "--column-number", String.valueOf(col),
                     file.getPath()
                 );
-                return launcher.getStdOut();
+                String stdOut = launcher.getStdOut();
+                if (stdOut.trim().isEmpty())
+                    return null;
+                return stdOut + "<br>";
             } catch (Exception ex) {
-                // todo: log
+                LOG.error(ex);
                 return null;
             }
         }

@@ -1,12 +1,14 @@
 module Main where
 
-import System.Environment
 import Control.Monad
+import System.Environment
 import System.Console.GetOpt
+
+import GHC
+
 import Compile
 import CheckMain
-import Text.Parsec.Pos
-import GHC
+import GetIdType
 
 data Mode = Compile | CheckMain | GetIdType
     deriving Read
@@ -26,7 +28,7 @@ data Options = Options
     , sourcePath      :: String
     , outputPath      :: String
     , compilerOptions :: [String]
-    , position        :: SourcePos
+    , position        :: (Int, Int)
     }
 
 options :: [OptDescr (Options -> Options)]
@@ -36,8 +38,8 @@ options =
     , Option ['o'] ["outpath"]        (ReqArg (\path opt -> opt {outputPath = path}) "DIR") "output path"
     , Option ['s'] ["sourcepath"]     (ReqArg (\path opt -> opt {sourcePath = path}) "DIR") "source path"
     , Option ['c'] ["ghcoptions"]     (ReqArg (\opts opt -> opt {compilerOptions = words opts}) "STRING") "GHC options"
-    , Option ['l'] ["line-number"]    (ReqArg (\line opt -> opt {position = setSourceLine (position opt) (read line)}) "Num") "line number"
-    , Option ['r'] ["column-number"]  (ReqArg (\col opt  -> opt {position = setSourceColumn (position opt) (read col)}) "Num") "column number"
+    , Option ['l'] ["line-number"]    (ReqArg (\line opt -> opt {position = (read line, snd $ position opt)}) "Num") "line number"
+    , Option ['r'] ["column-number"]  (ReqArg (\col opt  -> opt {position = (fst $ position opt, read col)}) "Num") "column number"
     ]
 
 defaultOpts :: Options
@@ -47,18 +49,17 @@ defaultOpts = Options
     , outputPath      = ""
     , sourcePath      = ""
     , compilerOptions = []
-    , position        = newPos "" 0 0
+    , position        = (0, 0)
     }
 
 main = do
     args <- getArgs
     let (opts'', files, errors)    = getOpt Permute options args
     unless (null $ errors) $ ioError $ userError $ concat errors
-    let opts'   = foldl (\opt f -> f opt) defaultOpts opts''
-        opts    = opts' {position = setSourceName (position opts') (head files)}
+    let opts    = foldl (\opt f -> f opt) defaultOpts opts''
         ghcpath = ghcPath opts
         srcpath = sourcePath opts
     case mode opts of
         Compile  -> compile (outputPath opts) srcpath ghcpath (compilerOptions opts) files
         CheckMain -> runGhc (Just ghcpath) $ checkMain srcpath $ head files
-        GetIdType -> return ()
+        GetIdType -> getIdType srcpath ghcpath (head files) (position opts)

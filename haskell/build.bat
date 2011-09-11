@@ -1,1 +1,1 @@
-ghc -W --make -package ghc err_test.hs
+ghc -W --make -package ghc -O2 err_test.hs

@@ -40,14 +40,14 @@ doExtractIds checked = do
 
 doWalk :: Ghc ()
 doWalk = do
-    flags <- getSessionDynFlags
-    setSessionDynFlags (flags { hscTarget = HscNothing, ghcLink = NoLink })
-    addTarget Target { targetId = TargetFile "test.hs" Nothing, targetAllowObjCode = False, targetContents = Nothing }
-    g <- depanal [] True
-    parsed <- parseModule $ head g
+    let file = "test.hs"
+    setupFlags True []
+    addTarget' file
+    mods <- loadHsFile file
+    parsed <- parseModule $ head mods
     checked <- typecheckModule parsed
-    --doExtractTypes checked
-    doExtractIds checked
+    doExtractTypes checked
+    --doExtractIds checked
 
 main = do
     runGhc (Just "C:\\Haskell\\lib") doWalk

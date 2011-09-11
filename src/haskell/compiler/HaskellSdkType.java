@@ -27,6 +27,7 @@ public final class HaskellSdkType extends SdkType {
 
     public String suggestHomePath() {
         if (SystemInfo.isLinux) {
+            // /usr/lib/ghc-XXXX
             return "/usr/lib/ghc/"; // todo: ???
         }
         if (SystemInfo.isWindows) {
@@ -35,6 +36,7 @@ public final class HaskellSdkType extends SdkType {
             // todo: what Haskell Platform suggests on first install?
             // todo: look in PATH
             // todo: look in registry
+            // C:\Program Files (x86)\Haskell Platform\2010.2.0.0
             File[] roots = File.listRoots();
             if (roots.length > 0) {
                 return new File(roots[0], "Haskell").getAbsolutePath();

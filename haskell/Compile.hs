@@ -1,5 +1,13 @@
 module Compile (compile) where
 
+import Control.Monad (when)
+import Data.Char
+import Data.Maybe
+import Data.List (isPrefixOf, partition)
+import System.FilePath
+import System.Directory
+import System.Info (os)
+
 import GHC
 import HscTypes
 import ErrUtils
@@ -7,14 +15,9 @@ import Bag
 import Outputable
 import MonadUtils
 import SrcLoc
-import Data.Char
-import Data.Maybe
 import FastString
-import Data.List (isPrefixOf, partition)
-import System.FilePath
-import System.Directory
-import System.Info (os)
-import Control.Monad (when)
+
+import HUtil
 
 compile outPath srcPath ghcPath compilerOptions files =
     let 
@@ -72,16 +75,8 @@ compile outPath srcPath ghcPath compilerOptions files =
 
 doWalk :: [String] -> Bool -> [String] -> Ghc ()
 doWalk cmdFlags skipOut files = do
-    flg <- getSessionDynFlags
-    (flg, _, _) <- parseDynamicFlags flg (map noLoc cmdFlags)
-    setSessionDynFlags $ if skipOut
-       then flg { hscTarget = HscNothing, ghcLink = NoLink }
-       else flg
-    mapM_ (\file -> addTarget Target {
-        targetId = TargetFile file Nothing
-      , targetAllowObjCode = False
-      , targetContents = Nothing })
-      files
+    setupFlags skipOut cmdFlags
+    mapM_ addTarget' files
     loadWithLogger logger LoadAllTargets `gcatch` catcher
     warns <- getWarnings
     outputBag warns
