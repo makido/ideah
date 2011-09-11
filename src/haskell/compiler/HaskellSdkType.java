@@ -13,6 +13,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FilenameFilter;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Map;
 
 // todo: config page - do not include classpath/sourcepath/etc
@@ -26,23 +29,60 @@ public final class HaskellSdkType extends SdkType {
     }
 
     public String suggestHomePath() {
+        File haskellProgDir;
         if (SystemInfo.isLinux) {
-            // /usr/lib/ghc-XXXX
-            return "/usr/lib/ghc/"; // todo: ???
+            haskellProgDir = new File("/usr/lib");
+            if (!haskellProgDir.exists())
+                return null;
+            String[] ghcDirs = haskellProgDir.list(new FilenameFilter() {
+                public boolean accept(File dir, String name) {
+                    return name.startsWith("ghc") && new File(dir, name).isDirectory();
+                }
+            }
+            );
+            return getLatestVersion(ghcDirs);
         }
         if (SystemInfo.isWindows) {
-            // todo: try more options:
-            // todo: different disks
-            // todo: what Haskell Platform suggests on first install?
-            // todo: look in PATH
-            // todo: look in registry
-            // C:\Program Files (x86)\Haskell Platform\2010.2.0.0
-            File[] roots = File.listRoots();
-            if (roots.length > 0) {
-                return new File(roots[0], "Haskell").getAbsolutePath();
-            }
+            String progFiles = System.getenv("ProgramFiles(x86)");
+            if (progFiles == null)
+                progFiles = System.getenv("ProgramFiles");
+            haskellProgDir = new File(progFiles, "Haskell Platform");
+            if (!haskellProgDir.exists())
+                return progFiles;
+            return getLatestVersion(haskellProgDir.list());
         }
         return null;
+    }
+
+    private static String getLatestVersion(String[] names) {
+        int length = names.length;
+        if (length == 0)
+            return null;
+        if (length == 1)
+            return names[0];
+        Map<String[], String> nameMap = new HashMap<String[], String>();
+        for (String name : names)
+            nameMap.put(name.split("[^0-9]"), name);
+        Object[] versions = nameMap.keySet().toArray();
+        Arrays.sort(versions, new Comparator<Object>() {
+            public int compare(Object o1, Object o2) {
+                String[] s1 = (String[]) o1;
+                String[] s2 = (String[]) o2;
+                int minSize = Math.min(s1.length, s2.length);
+                int compare = 0;
+                for (int i = 0; i < minSize; i++) {
+                    compare = s1[i].compareTo(s2[i]);
+                    if (compare != 0)
+                        break;
+                }
+                return compare == 0
+                        ? s1.length == minSize
+                            ? 1
+                            : -1
+                        : compare;
+            }
+        });
+        return nameMap.get(versions[versions.length - 1]);
     }
 
     public static boolean checkForGhc(File path) {
