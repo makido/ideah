@@ -26,7 +26,7 @@ checkMain srcpath file = do
         summaries
     parsedMod      <- parseModule $ head summy
     let decls      = hsmodDecls $ unLoc $ parsedSource parsedMod
-    let hasMain    = any isMain $ map unLoc decls
+        hasMain    = any isMain $ map unLoc decls
     liftIO $ putStrLn $ if hasMain then "t" else "f"
 
 isMain (ValD (FunBind funid _ _ _ _ _)) = showSDoc (ppr $ unLoc funid) == "main"

@@ -52,11 +52,12 @@ defaultOpts = Options
 
 main = do
     args <- getArgs
-    let (opts', files, errors)    = getOpt Permute options args
+    let (opts'', files, errors)    = getOpt Permute options args
     unless (null $ errors) $ ioError $ userError $ concat errors
-    let opts    = foldl (\opt f -> f opt) defaultOpts opts'
-    let ghcpath = ghcPath opts
-    let srcpath = sourcePath opts
+    let opts'   = foldl (\opt f -> f opt) defaultOpts opts''
+        opts    = opts' {position = setSourceName (position opts') (head files)}
+        ghcpath = ghcPath opts
+        srcpath = sourcePath opts
     case mode opts of
         Compile  -> compile (outputPath opts) srcpath ghcpath (compilerOptions opts) files
         CheckMain -> runGhc (Just ghcpath) $ checkMain srcpath $ head files

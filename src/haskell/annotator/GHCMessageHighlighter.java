@@ -13,6 +13,7 @@ import haskell.compiler.GHCMessage;
 import haskell.compiler.LaunchGHC;
 import haskell.util.LineColRange;
 
+import java.io.File;
 import java.util.List;
 
 public final class GHCMessageHighlighter implements ExternalAnnotator {
@@ -24,22 +25,24 @@ public final class GHCMessageHighlighter implements ExternalAnnotator {
         Module module = rootManager.getFileIndex().getModuleForFile(file);
         List<GHCMessage> ghcMessages = LaunchGHC.getGHCMessages(null, file.getPath(), module, true);
         for (GHCMessage ghcMessage : ghcMessages) {
-            LineColRange lcRange = ghcMessage.getRange();
-            TextRange range = lcRange.getRange(psiFile);
-            String message = ghcMessage.getErrorMessage();
-            CompilerMessageCategory category = ghcMessage.getCategory();
-            switch (category) {
-            case ERROR:
-                annotationHolder.createErrorAnnotation(range, message);
-                break;
-            case WARNING:
-                annotationHolder.createWarningAnnotation(range, message);
-                break;
-            case INFORMATION:
-                annotationHolder.createInfoAnnotation(range, message);
-                break;
-            case STATISTICS:
-                break;
+            if (new File(ghcMessage.getFileName()).equals(new File(psiFile.getVirtualFile().getPath()))) {
+                LineColRange lcRange = ghcMessage.getRange();
+                TextRange range = lcRange.getRange(psiFile);
+                String message = ghcMessage.getErrorMessage();
+                CompilerMessageCategory category = ghcMessage.getCategory();
+                switch (category) {
+                case ERROR:
+                    annotationHolder.createErrorAnnotation(range, message);
+                    break;
+                case WARNING:
+                    annotationHolder.createWarningAnnotation(range, message);
+                    break;
+                case INFORMATION:
+                    annotationHolder.createInfoAnnotation(range, message);
+                    break;
+                case STATISTICS:
+                    break;
+                }
             }
         }
     }
