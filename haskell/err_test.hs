@@ -36,8 +36,8 @@ options =
     , Option ['o'] ["outpath"]        (ReqArg (\path opt -> opt {outputPath = path}) "DIR") "output path"
     , Option ['s'] ["sourcepath"]     (ReqArg (\path opt -> opt {sourcePath = path}) "DIR") "source path"
     , Option ['c'] ["ghcoptions"]     (ReqArg (\opts opt -> opt {compilerOptions = words opts}) "STRING") "GHC options"
-    , Option "ln"  ["line-number"]    (ReqArg (\line opt -> opt {position = setSourceLine (position opt) (read line)}) "Num") "line number"
-    , Option "col" ["column-number"]  (ReqArg (\col opt  -> opt {position = setSourceColumn (position opt) (read col)}) "Num") "column number"
+    , Option ['l'] ["line-number"]    (ReqArg (\line opt -> opt {position = setSourceLine (position opt) (read line)}) "Num") "line number"
+    , Option ['r'] ["column-number"]  (ReqArg (\col opt  -> opt {position = setSourceColumn (position opt) (read col)}) "Num") "column number"
     ]
 
 defaultOpts :: Options
