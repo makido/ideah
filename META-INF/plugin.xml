@@ -40,6 +40,7 @@
         <!--<enterHandlerDelegate implementation="haskell.formatter.HaskellEnterHandler"-->
                               <!--order="before EnterBetweenBracesHandler"/>-->
         <externalAnnotator implementationClass="haskell.annotator.GHCMessageHighlighter" language="Haskell"/>
+        <lang.documentationProvider language="Haskell" implementationClass="haskell.documentation.HaskellDocumentationProvider"/>
 
         <sdkType id="GHC" implementation="haskell.compiler.HaskellSdkType"/>
         <moduleType id="HASKELL_MODULE" classpathProvider="false" implementationClass="haskell.module.HaskellModuleType"/>

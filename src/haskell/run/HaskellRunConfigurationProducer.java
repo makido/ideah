@@ -71,7 +71,8 @@ public final class HaskellRunConfigurationProducer extends RuntimeConfigurationP
         ProcessLauncher launcher = new ProcessLauncher(
             false,
             compiler.exe,
-            "-m", "-g", compiler.libPath,
+            "-m", "CheckMain",
+            "-g", compiler.libPath,
             "-s", CompilerLocation.rootsToString(ModuleRootManager.getInstance(module).getSourceRoots(false)),
             filePath
         );

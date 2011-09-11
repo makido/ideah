@@ -31,7 +31,7 @@ public final class LaunchGHC {
             args.add(compiler.exe);
             VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(tests);
             args.addAll(Arrays.asList(
-                "-d",
+                "-m", "Compile",
                 "-g", compiler.libPath,
                 "-c", "-W",
                 "-s", CompilerLocation.rootsToString(sourceRoots)

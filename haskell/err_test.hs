@@ -8,7 +8,8 @@ import CheckMain
 import Text.Parsec.Pos
 import GHC
 
-data Mode = Compile | CheckMain deriving Read
+data Mode = Compile | CheckMain | GetIdType
+    deriving Read
 
 -- ./err_test
 --    -m                  # err_test mode: establish presence of main function
@@ -59,3 +60,4 @@ main = do
     case mode opts of
         Compile  -> compile (outputPath opts) srcpath ghcpath (compilerOptions opts) files
         CheckMain -> runGhc (Just ghcpath) $ checkMain srcpath $ head files
+        GetIdType -> return ()
