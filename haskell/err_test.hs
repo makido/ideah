@@ -8,7 +8,7 @@ import CheckMain
 import Text.Parsec.Pos
 import GHC
 
-data Mode = Compile | MainPres
+data Mode = Compile | CheckMain deriving Read
 
 -- ./err_test
 --    -m                  # err_test mode: establish presence of main function
@@ -30,8 +30,7 @@ data Options = Options
 
 options :: [OptDescr (Options -> Options)]
 options =
-    [ Option ['m'] ["main-func-mode"] (NoArg (\opt -> opt {mode = MainPres})) "Mode"
-    , Option ['d'] ["default-mode"]   (NoArg (\opt -> opt {mode = Compile})) "Mode"
+    [ Option ['m'] ["main-func-mode"] (ReqArg (\mod opt  -> opt {mode = read mod}) "Mode") "Mode"
     , Option ['g'] ["ghcpath"]        (ReqArg (\path opt -> opt {ghcPath = path}) "DIR") "GHC path"
     , Option ['o'] ["outpath"]        (ReqArg (\path opt -> opt {outputPath = path}) "DIR") "output path"
     , Option ['s'] ["sourcepath"]     (ReqArg (\path opt -> opt {sourcePath = path}) "DIR") "source path"
@@ -62,4 +61,4 @@ main = do
     let srcpath = sourcePath opts
     case mode opts of
         Compile  -> compile (outputPath opts) srcpath ghcpath (compilerOptions opts) files
-        MainPres -> runGhc (Just ghcpath) $ checkMain srcpath $ head files
+        CheckMain -> runGhc (Just ghcpath) $ checkMain srcpath $ head files
