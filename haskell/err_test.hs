@@ -1,13 +1,14 @@
 module Main where
 
 import System.Environment
-import Control.Monad (unless)
+import Control.Monad
 import System.Console.GetOpt
 import Compile
 import CheckMain
+import Text.Parsec.Pos
 import GHC
 
-data Mode = Compile | MainPres deriving Show
+data Mode = Compile | MainPres
 
 -- ./err_test
 --    -m                  # err_test mode: establish presence of main function
@@ -24,7 +25,8 @@ data Options = Options
     , sourcePath      :: String
     , outputPath      :: String
     , compilerOptions :: [String]
-    } deriving Show
+    , position        :: SourcePos
+    }
 
 options :: [OptDescr (Options -> Options)]
 options =
@@ -34,6 +36,8 @@ options =
     , Option ['o'] ["outpath"]        (ReqArg (\path opt -> opt {outputPath = path}) "DIR") "output path"
     , Option ['s'] ["sourcepath"]     (ReqArg (\path opt -> opt {sourcePath = path}) "DIR") "source path"
     , Option ['c'] ["ghcoptions"]     (ReqArg (\opts opt -> opt {compilerOptions = words opts}) "STRING") "GHC options"
+    , Option "ln"  ["line-number"]    (ReqArg (\line opt -> opt {position = setSourceLine (position opt) (read line)}) "Num") "line number"
+    , Option "col" ["column-number"]  (ReqArg (\col opt  -> opt {position = setSourceColumn (position opt) (read col)}) "Num") "column number"
     ]
 
 defaultOpts :: Options
@@ -43,12 +47,16 @@ defaultOpts = Options
     , outputPath      = ""
     , sourcePath      = ""
     , compilerOptions = []
+    , position        = newPos "" 0 0
     }
 
 main = do
     args <- getArgs
     let (opts', files, errors)    = getOpt Permute options args
-    unless (null errors) $ ioError $ userError $ concat errors
+    let errors' = (if "-m" `elem` args && "-d" `elem` args
+                  then "Contradictory mode specification"
+                  else []) : errors
+    unless (null $ errors') $ ioError $ userError $ concat errors'
     let opts    = foldl (\opt f -> f opt) defaultOpts opts'
     let ghcpath = ghcPath opts
     let srcpath = sourcePath opts
