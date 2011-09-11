@@ -52,9 +52,6 @@ defaultOpts = Options
 main = do
     args <- getArgs
     let (opts', files, errors)    = getOpt Permute options args
-    let errors' = (if "-m" `elem` args && "-d" `elem` args
-                  then "Contradictory mode specification"
-                  else []) : errors
     unless (null $ errors') $ ioError $ userError $ concat errors'
     let opts    = foldl (\opt f -> f opt) defaultOpts opts'
     let ghcpath = ghcPath opts
