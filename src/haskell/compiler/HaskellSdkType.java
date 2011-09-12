@@ -67,17 +67,14 @@ public final class HaskellSdkType extends SdkType {
                 Integer[] version1 = d1.version;
                 Integer[] version2 = d2.version;
                 int minSize = Math.min(version1.length, version2.length);
-            int compare = 0;
-            for (int i = 0; i < minSize; i++) {
-                compare = version1[i].compareTo(version2[i]);
-                if (compare != 0)
-                    break;
+                for (int i = 0; i < minSize; i++) {
+                    int compare = version1[i].compareTo(version2[i]);
+                    if (compare != 0)
+                        return compare;
             }
-            return compare == 0
-                    ? version1.length == minSize
-                        ? 1
-                        : -1
-                    : compare;
+            return version1.length == minSize
+                    ? -1
+                    : 1;
             }
         });
         return ghcDirs.get(ghcDirs.size() - 1).name;
