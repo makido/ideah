@@ -41,8 +41,9 @@ public final class HaskellSdkType extends SdkType {
             );
         } else if (SystemInfo.isWindows) {
             String progFiles = System.getenv("ProgramFiles(x86)");
-            if (progFiles == null)
+            if (progFiles == null) {
                 progFiles = System.getenv("ProgramFiles");
+            }
             haskellProgDir = new File(progFiles, "Haskell Platform");
             if (!haskellProgDir.exists())
                 return progFiles;
@@ -60,8 +61,9 @@ public final class HaskellSdkType extends SdkType {
         if (length == 1)
             return names[0];
         List<GHCDir> ghcDirs = new ArrayList<GHCDir>();
-        for (String name : names)
+        for (String name : names) {
             ghcDirs.add(new GHCDir(name));
+        }
         Collections.sort(ghcDirs, new Comparator<GHCDir>() {
             public int compare(GHCDir d1, GHCDir d2) {
                 Integer[] version1 = d1.version;
@@ -71,10 +73,8 @@ public final class HaskellSdkType extends SdkType {
                     int compare = version1[i].compareTo(version2[i]);
                     if (compare != 0)
                         return compare;
-            }
-            return version1.length == minSize
-                    ? -1
-                    : 1;
+                }
+                return version1.length - version2.length;
             }
         });
         return ghcDirs.get(ghcDirs.size() - 1).name;
@@ -139,9 +139,9 @@ public final class HaskellSdkType extends SdkType {
         try {
             // todo: check for Linux
             String output = new ProcessLauncher(
-                false,
-                homePath + File.separator + "bin" + File.separator + "ghc",
-                "--numeric-version"
+                    false,
+                    homePath + File.separator + "bin" + File.separator + "ghc",
+                    "--numeric-version"
             ).getStdOut();
             return output.trim();
         } catch (Exception ex) {
