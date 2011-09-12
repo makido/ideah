@@ -14,9 +14,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FilenameFilter;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Map;
+import java.util.*;
 
 // todo: config page - do not include classpath/sourcepath/etc
 public final class HaskellSdkType extends SdkType {
@@ -29,29 +27,30 @@ public final class HaskellSdkType extends SdkType {
     }
 
     public String suggestHomePath() {
-        File haskellProgDir;
+        File haskellProgDir = null;
+        String[] ghcDirs = null;
         if (SystemInfo.isLinux) {
             haskellProgDir = new File("/usr/lib");
             if (!haskellProgDir.exists())
                 return null;
-            String[] ghcDirs = haskellProgDir.list(new FilenameFilter() {
+            ghcDirs = haskellProgDir.list(new FilenameFilter() {
                 public boolean accept(File dir, String name) {
-                    return name.startsWith("ghc") && new File(dir, name).isDirectory();
+                    return name.toLowerCase().startsWith("ghc") && new File(dir, name).isDirectory();
                 }
             }
             );
-            return getLatestVersion(ghcDirs);
-        }
-        if (SystemInfo.isWindows) {
+        } else if (SystemInfo.isWindows) {
             String progFiles = System.getenv("ProgramFiles(x86)");
             if (progFiles == null)
                 progFiles = System.getenv("ProgramFiles");
             haskellProgDir = new File(progFiles, "Haskell Platform");
             if (!haskellProgDir.exists())
                 return progFiles;
-            return getLatestVersion(haskellProgDir.list());
+            ghcDirs = haskellProgDir.list();
         }
-        return null;
+        return haskellProgDir == null
+                ? null
+                : new File(haskellProgDir, getLatestVersion(ghcDirs)).getAbsolutePath();
     }
 
     private static String getLatestVersion(String[] names) {
@@ -60,29 +59,28 @@ public final class HaskellSdkType extends SdkType {
             return null;
         if (length == 1)
             return names[0];
-        Map<String[], String> nameMap = new HashMap<String[], String>();
+        List<GHCDir> ghcDirs = new ArrayList<GHCDir>();
         for (String name : names)
-            nameMap.put(name.split("[^0-9]"), name);
-        Object[] versions = nameMap.keySet().toArray();
-        Arrays.sort(versions, new Comparator<Object>() {
-            public int compare(Object o1, Object o2) {
-                String[] s1 = (String[]) o1;
-                String[] s2 = (String[]) o2;
-                int minSize = Math.min(s1.length, s2.length);
-                int compare = 0;
-                for (int i = 0; i < minSize; i++) {
-                    compare = s1[i].compareTo(s2[i]);
-                    if (compare != 0)
-                        break;
-                }
-                return compare == 0
-                        ? s1.length == minSize
-                            ? 1
-                            : -1
-                        : compare;
+            ghcDirs.add(new GHCDir(name));
+        Collections.sort(ghcDirs, new Comparator<GHCDir>() {
+            public int compare(GHCDir d1, GHCDir d2) {
+                String[] version1 = d1.version;
+                String[] version2 = d2.version;
+                int minSize = Math.min(version1.length, version2.length);
+            int compare = 0;
+            for (int i = 0; i < minSize; i++) {
+                compare = version1[i].compareTo(version2[i]);
+                if (compare != 0)
+                    break;
+            }
+            return compare == 0
+                    ? version1.length == minSize
+                        ? 1
+                        : -1
+                    : compare;
             }
         });
-        return nameMap.get(versions[versions.length - 1]);
+        return ghcDirs.get(ghcDirs.size() - 1).name;
     }
 
     public static boolean checkForGhc(File path) {
