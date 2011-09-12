@@ -3,10 +3,15 @@ package haskell.compiler;
 class GHCDir {
 
     final String name;
-    final String[] version;
+    final Integer[] version;
 
     GHCDir(String name) {
         this.name = name;
-        version = name.split("[^0-9]");
+        String[] versionStr = name.split("[^0-9]");
+        version = new Integer[versionStr.length];
+        for (int i = 0; i < versionStr.length; i++) {
+            version[i] = Integer.parseInt(versionStr[i]);
+        }
     }
 }
+
