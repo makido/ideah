@@ -24,8 +24,9 @@ public final class GHCMessageHighlighter implements ExternalAnnotator {
         ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
         Module module = rootManager.getFileIndex().getModuleForFile(file);
         List<GHCMessage> ghcMessages = LaunchGHC.getGHCMessages(null, file.getPath(), module, true);
+        File mainFile = new File(file.getPath());
         for (GHCMessage ghcMessage : ghcMessages) {
-            if (new File(ghcMessage.getFileName()).equals(new File(psiFile.getVirtualFile().getPath()))) {
+            if (new File(ghcMessage.getFileName()).equals(mainFile)) {
                 LineColRange lcRange = ghcMessage.getRange();
                 TextRange range = lcRange.getRange(psiFile);
                 String message = ghcMessage.getErrorMessage();

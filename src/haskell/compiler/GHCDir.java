@@ -1,6 +1,6 @@
 package haskell.compiler;
 
-class GHCDir {
+final class GHCDir {
 
     final String name;
     final Integer[] version;
@@ -14,4 +14,3 @@ class GHCDir {
         }
     }
 }
-

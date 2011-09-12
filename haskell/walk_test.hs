@@ -40,9 +40,10 @@ doExtractIds checked = do
 
 doWalk :: Ghc ()
 doWalk = do
-    let file = "test.hs"
-    setupFlags True []
+    let file = "D:\\TEMP\\untitled\\src\\test.hs"
+    setupFlags True ["-iD:\\TEMP\\untitled\\src"]
     addTarget' file
+    load LoadAllTargets
     mods <- loadHsFile file
     parsed <- parseModule $ head mods
     checked <- typecheckModule parsed
