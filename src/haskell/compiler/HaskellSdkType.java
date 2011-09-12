@@ -1,7 +1,6 @@
 package haskell.compiler;
 
 import com.intellij.openapi.projectRoots.*;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -37,8 +36,7 @@ public final class HaskellSdkType extends SdkType {
                 public boolean accept(File dir, String name) {
                     return name.toLowerCase().startsWith("ghc") && new File(dir, name).isDirectory();
                 }
-            }
-            );
+            });
         } else if (SystemInfo.isWindows) {
             String progFiles = System.getenv("ProgramFiles(x86)");
             if (progFiles == null) {
@@ -50,8 +48,8 @@ public final class HaskellSdkType extends SdkType {
             ghcDirs = haskellProgDir.list();
         }
         return haskellProgDir == null
-                ? null
-                : new File(haskellProgDir, getLatestVersion(ghcDirs)).getAbsolutePath();
+            ? null
+            : new File(haskellProgDir, getLatestVersion(ghcDirs)).getAbsolutePath();
     }
 
     private static String getLatestVersion(String[] names) {
@@ -88,7 +86,7 @@ public final class HaskellSdkType extends SdkType {
             public boolean accept(File f) {
                 if (f.isDirectory())
                     return false;
-                return Comparing.strEqual(FileUtil.getNameWithoutExtension(f), "ghc");
+                return "ghc".equalsIgnoreCase(FileUtil.getNameWithoutExtension(f));
             }
         });
         return children != null && children.length >= 1;
