@@ -6,7 +6,7 @@
 
     <property file="build.properties"/>
 
-    <property name="src.dir" location="src"/>
+    <property name="src.dir" location="src/java"/>
     <property name="build.dir" location="build"/>
     <property name="classes.dir" location="${build.dir}/classes"/>
     <property name="distr.dir" location="."/>
@@ -31,10 +31,11 @@
 
     <target name="clean">
         <delete dir="${build.dir}"/>
+        <delete file="ideah.jar"/>
     </target>
 
     <target name="compile" depends="init">
-        <javac srcdir="${src.dir}" destdir="${classes.dir}" debug="true">
+        <javac srcdir="${src.dir}" destdir="${classes.dir}" debug="true" includeantruntime="false">
             <classpath refid="project.classpath"/>
             <compilerarg line="${javac.options}"/>
         </javac>
@@ -46,6 +47,9 @@
         </copy>
         <copy todir="${classes.dir}">
             <fileset dir="${src.dir}" includes="**/*.png"/>
+        </copy>
+        <copy todir="${classes.dir}">
+            <fileset dir="src/haskell" includes="**/*.hs"/>
         </copy>
         <jar destfile="${distr.dir}/ideah.jar">
             <fileset dir="${classes.dir}"/>
