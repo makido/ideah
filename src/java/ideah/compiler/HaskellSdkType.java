@@ -19,7 +19,7 @@ import java.util.*;
 public final class HaskellSdkType extends SdkType {
 
     public static final HaskellSdkType INSTANCE = new HaskellSdkType();
-    private static final Icon GHC_ICON = IconLoader.getIcon("/haskell/haskell_16x16.png"); // todo: another icon?
+    private static final Icon GHC_ICON = IconLoader.getIcon("/ideah/haskell_16x16.png"); // todo: another icon?
 
     public HaskellSdkType() {
         super("GHC");
@@ -113,7 +113,7 @@ public final class HaskellSdkType extends SdkType {
 
     private final Map<String, String> cachedVersionStrings = new HashMap<String, String>();
 
-    public final String getVersionString(String sdkHome) {
+    public String getVersionString(String sdkHome) {
         if (cachedVersionStrings.containsKey(sdkHome)) {
             return cachedVersionStrings.get(sdkHome);
         }

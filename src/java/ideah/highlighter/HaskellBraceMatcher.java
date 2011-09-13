@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 public final class HaskellBraceMatcher implements PairedBraceMatcher, HaskellTokenTypes {
 
-    private static final BracePair[] PAIRS = new BracePair[] {
+    private static final BracePair[] PAIRS = {
         new BracePair(L_PAREN, R_PAREN, true),
         new BracePair(L_SQUARE, R_SQUARE, true),
         new BracePair(L_CURLY, R_CURLY, true)

@@ -75,7 +75,7 @@ public final class HaskellCompiler implements TranslatingCompiler {
         }
     }
 
-    protected static VirtualFile getMainOutput(CompileContext compileContext, Module module, boolean tests) {
+    static VirtualFile getMainOutput(CompileContext compileContext, Module module, boolean tests) {
         return tests
             ? compileContext.getModuleOutputDirectoryForTests(module)
             : compileContext.getModuleOutputDirectory(module);

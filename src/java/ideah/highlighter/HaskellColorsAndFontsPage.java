@@ -31,7 +31,7 @@ public final class HaskellColorsAndFontsPage implements ColorSettingsPage {
     }
 
     private static final AttributesDescriptor[] ATTRS =
-        new AttributesDescriptor[] {
+        {
             new AttributesDescriptor(HaskellSyntaxHighlighter.STRING_ID, HaskellSyntaxHighlighter.STRING_ATTR),
             new AttributesDescriptor(HaskellSyntaxHighlighter.NUMBER_ID, HaskellSyntaxHighlighter.NUMBER_ATTR),
             new AttributesDescriptor(HaskellSyntaxHighlighter.COMMENT_ID, HaskellSyntaxHighlighter.LINE_COMMENT_ATTR),

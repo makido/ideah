@@ -18,7 +18,7 @@ public final class HaskellFileType extends LanguageFileType {
 
     public static final HaskellFileType INSTANCE = new HaskellFileType();
     public static final Language HASKELL_LANGUAGE = INSTANCE.getLanguage();
-    public static final Icon HASKELL_ICON = IconLoader.getIcon("/haskell/haskell_16x16.png");
+    public static final Icon HASKELL_ICON = IconLoader.getIcon("/ideah/haskell_16x16.png");
 
     public HaskellFileType() {
         super(new HaskellLanguage());

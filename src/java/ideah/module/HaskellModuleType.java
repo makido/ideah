@@ -29,7 +29,7 @@ public final class HaskellModuleType extends ModuleType<HaskellModuleBuilder> {
     }
 
     public Icon getBigIcon() {
-        return IconLoader.getIcon("/haskell/haskell_24x24.png");
+        return IconLoader.getIcon("/ideah/haskell_24x24.png");
     }
 
     public Icon getNodeIcon(boolean isOpened) {
