@@ -2,24 +2,24 @@
     <name>Haskell plugin</name>
     <description>Support for Haskell language</description>
     <version>1.0</version>
-    <vendor logo="/haskell/haskell_16x16.png" url="http://code.google.com/p/ideah/">IDEAH</vendor>
+    <vendor logo="/ideah/haskell_16x16.png" url="http://code.google.com/p/ideah/">IDEAH</vendor>
     <idea-version since-build="8000"/>
 
     <application-components>
         <component>
-            <implementation-class>haskell.HaskellLoader</implementation-class>
+            <implementation-class>ideah.HaskellLoader</implementation-class>
         </component>
     </application-components>
 
     <project-components>
         <component>
-            <implementation-class>haskell.compiler.HaskellCompilerProjectComponent</implementation-class>
+            <implementation-class>ideah.compiler.HaskellCompilerProjectComponent</implementation-class>
         </component>
         <!-- Add your project components here -->
     </project-components>
 
     <actions>
-        <action id="Haskell.HaskellFile" class="haskell.actions.NewHaskellFileAction"
+        <action id="Haskell.HaskellFile" class="ideah.actions.NewHaskellFileAction"
                 text="Haskell module" description="Create new Haskell module">
             <add-to-group group-id="NewGroup" anchor="first"/>
         </action>
@@ -27,27 +27,27 @@
     </actions>
 
     <extensions defaultExtensionNs="com.intellij">
-        <fileTypeFactory implementation="haskell.HaskellFileTypeLoader"/>
+        <fileTypeFactory implementation="ideah.HaskellFileTypeLoader"/>
 
-        <syntaxHighlighter key="Haskell" implementationClass="haskell.highlighter.HaskellSyntaxHighlighter"/>
-        <colorSettingsPage implementation="haskell.highlighter.HaskellColorsAndFontsPage"/>
+        <syntaxHighlighter key="Haskell" implementationClass="ideah.highlighter.HaskellSyntaxHighlighter"/>
+        <colorSettingsPage implementation="ideah.highlighter.HaskellColorsAndFontsPage"/>
         <lang.braceMatcher language="Haskell"
-                           implementationClass="haskell.highlighter.HaskellBraceMatcher"/>
-        <lang.commenter language="Haskell" implementationClass="haskell.highlighter.HaskellCommenter"/>
-        <lang.parserDefinition language="Haskell" implementationClass="haskell.parser.HaskellParserDefinition"/>
+                           implementationClass="ideah.highlighter.HaskellBraceMatcher"/>
+        <lang.commenter language="Haskell" implementationClass="ideah.highlighter.HaskellCommenter"/>
+        <lang.parserDefinition language="Haskell" implementationClass="ideah.parser.HaskellParserDefinition"/>
         <!--<lang.formatter language="Haskell"-->
-                        <!--implementationClass="haskell.formatter.HaskellFormattingModelBuilder"/>-->
-        <!--<enterHandlerDelegate implementation="haskell.formatter.HaskellEnterHandler"-->
+                        <!--implementationClass="ideah.formatter.HaskellFormattingModelBuilder"/>-->
+        <!--<enterHandlerDelegate implementation="ideah.formatter.HaskellEnterHandler"-->
                               <!--order="before EnterBetweenBracesHandler"/>-->
-        <externalAnnotator implementationClass="haskell.annotator.GHCMessageHighlighter" language="Haskell"/>
-        <lang.documentationProvider language="Haskell" implementationClass="haskell.documentation.HaskellDocumentationProvider"/>
+        <externalAnnotator implementationClass="ideah.annotator.GHCMessageHighlighter" language="Haskell"/>
+        <lang.documentationProvider language="Haskell" implementationClass="ideah.documentation.HaskellDocumentationProvider"/>
 
-        <sdkType id="GHC" implementation="haskell.compiler.HaskellSdkType"/>
-        <moduleType id="HASKELL_MODULE" classpathProvider="false" implementationClass="haskell.module.HaskellModuleType"/>
-        <moduleConfigurationEditorProvider implementation="haskell.module.HaskellModuleConfigEditor"/>
+        <sdkType id="GHC" implementation="ideah.compiler.HaskellSdkType"/>
+        <moduleType id="HASKELL_MODULE" classpathProvider="false" implementationClass="ideah.module.HaskellModuleType"/>
+        <moduleConfigurationEditorProvider implementation="ideah.module.HaskellModuleConfigEditor"/>
 
-        <configurationType implementation="haskell.run.HaskellRunConfigurationType"/>
-        <configurationProducer implementation="haskell.run.HaskellRunConfigurationProducer"/>
+        <configurationType implementation="ideah.run.HaskellRunConfigurationType"/>
+        <configurationProducer implementation="ideah.run.HaskellRunConfigurationProducer"/>
         <!-- Add your extensions here -->
     </extensions>
 </idea-plugin>
