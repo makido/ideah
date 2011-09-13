@@ -16,7 +16,7 @@ import java.net.URISyntaxException;
 public final class CompilerLocation {
 
     private static final Logger LOG = Logger.getInstance("ideah.util.CompilerLocation");
-    private static final String ERR_TEST = "ask_ghc";
+    private static final String MAIN_FILE = "ask_ghc";
 
     private static Long sourcesLastModified = null;
 
@@ -81,7 +81,7 @@ public final class CompilerLocation {
         try {
             File pluginPath = new File(new File(System.getProperty("user.home"), ".ideah"), sdk.getVersionString());
             pluginPath.mkdirs();
-            File compilerExe = new File(pluginPath, getExeName(ERR_TEST));
+            File compilerExe = new File(pluginPath, getExeName(MAIN_FILE));
             if (needRecompile(compilerExe)) {
                 if (!compileHs(pluginPath, ghcHome, compilerExe))
                     return null;
@@ -114,11 +114,11 @@ public final class CompilerLocation {
             File outFile = new File(pluginPath, file.getName());
             FileUtil.copy(file, outFile);
         }
-        String mainHs = ERR_TEST + ".hs";
+        String mainHs = MAIN_FILE + ".hs";
         ProcessLauncher launcher = new ProcessLauncher(
             true,
             new File(ghcBin.getPath(), "ghc").getAbsolutePath(),
-            "--make", "-package", "ghc",
+            "--make", "-cpp", "-O", "-package", "ghc",
             "-i" + pluginPath.getAbsolutePath(),
             new File(pluginPath, mainHs).getAbsolutePath()
         );

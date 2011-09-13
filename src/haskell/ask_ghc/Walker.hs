@@ -76,8 +76,13 @@ walkStmt f (ExprStmt expr _ _) = walkLExpr f expr -- todo: has type
 walkStmt f (LetStmt binds) = walkLocals f binds
 -- ???
 walkStmt f (ParStmt _) = return ()
+#if __GLASGOW_HASKELL__ >= 700
+walkStmt f (TransformStmt _ _ _ _) = return ()
+walkStmt f (GroupStmt _ _ _ _) = return ()
+#else
 walkStmt f (TransformStmt _ _ _) = return ()
 walkStmt f (GroupStmt _ _) = return ()
+#endif
 walkStmt f (RecStmt _ _ _ _ _ _ _ _) = return ()
 
 
@@ -191,7 +196,11 @@ walkExpr f _loc (HsCase expr mg) = do
     walkLExpr f expr
     walkMatchGroup f mg
 -- if expression
+#if __GLASGOW_HASKELL__ >= 700
+walkExpr f _loc (HsIf _ expr ethen eelse) = do
+#else
 walkExpr f _loc (HsIf expr ethen eelse) = do
+#endif
     walkLExpr f expr
     walkLExpr f ethen
     walkLExpr f eelse
@@ -291,14 +300,22 @@ walkValD f _loc (PatBind lhs rhss _ _) = do -- todo: has type
     walkLPattern f lhs
     walkRHSs f rhss
 -- ???
+#if __GLASGOW_HASKELL__ >= 700
+walkValD _f _loc (VarBind _ _ _) = return ()
+#else
 walkValD _f _loc (VarBind _ _) = return ()
+#endif
 {-
 walkValD f loc (VarBind var expr) = do
     (generic f) var loc WFunDecl
     walkLExpr f expr
 -}
 -- ???
+#if __GLASGOW_HASKELL__ >= 700
+walkValD f loc (AbsBinds _ _ exps _ binds) = do
+#else
 walkValD f loc (AbsBinds _ _ exps binds) = do
+#endif
     mapM (\id -> (generic f) id loc WFunDecl2) ids
     walkLBinds f binds
     where ids = [x | (_, x, _, _) <- exps]
@@ -374,12 +391,19 @@ walk f _loc (RuleD ruleD) = walkRuleD f ruleD
 walk f _loc (SpliceD spliceD) = walkSpliceD f spliceD
 walk f _loc (AnnD annD) = walkAnnD f annD
 walk f _loc (DocD docD) = walkDocD f docD
+#if __GLASGOW_HASKELL__ >= 700
+walk f _loc (QuasiQuoteD _) = return ()
+#endif
 
 
 walkGroup :: (Monad m) => Callback a m -> HsGroup a -> m ()
 walkGroup f (HsGroup valds tyclds instds derivds fixds defds fords warnds annds ruleds docs) = do
     walkBinds f valds
+#if __GLASGOW_HASKELL__ >= 700
+    mapM_ (walkTyClD f . unLoc) (concat tyclds)
+#else
     mapM_ (walkTyClD f . unLoc) tyclds
+#endif
     mapM_ (walkInstD f . unLoc) instds
     mapM_ (walkDerivD f . unLoc) derivds
     mapM_ (walkFixD f . unLoc) fixds
