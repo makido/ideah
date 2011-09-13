@@ -16,7 +16,7 @@ import java.net.URISyntaxException;
 public final class CompilerLocation {
 
     private static final Logger LOG = Logger.getInstance("haskell.util.CompilerLocation");
-    private static final String ERR_TEST = "err_test";
+    private static final String ERR_TEST = "ask_ghc";
 
     private static Long sourcesLastModified = null;
 
@@ -35,7 +35,7 @@ public final class CompilerLocation {
     }
 
     private static File[] listHaskellSources() throws URISyntaxException {
-        File pluginHaskellDir = new File(CompilerLocation.class.getResource("/haskell/").toURI());
+        File pluginHaskellDir = new File(CompilerLocation.class.getResource("/ask_ghc/").toURI());
         return pluginHaskellDir.listFiles(new FilenameFilter() {
             public boolean accept(File dir, String name) {
                 return name.endsWith(".hs");
